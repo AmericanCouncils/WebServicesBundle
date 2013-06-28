@@ -1,0 +1,21 @@
+{
+    "name": "ac/web-services-bundle",
+    "type": "symfony-bundle",
+    "description": "Provides tools for developing RESTful APIs.",
+    "keywords": ["rest", "web services"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Evan Villemez",
+            "email": "evan.villemez@americancouncils.org"
+        }
+    ],
+    "target-dir": "AC/WebServicesBundle",
+    "autoload": {
+        "psr-0": { "AC\\WebServicesBundle": "" }
+    },
+    "minimum-stability": "stable",
+    "require": {
+        "jms/serializer-bundle": ">=0.11"
+    }
+}
