@@ -148,7 +148,7 @@ class RestServiceSubscriber implements EventSubscriberInterface
             $errorMessage = ($exception->getMessage()) ? $exception->getMessage() : Response::$statusTexts[$realHttpErrorCode];
         } elseif (isset($this->exceptionMap[$exceptionClass])) {
             //check exception map for overrides
-            $realHttpErrorCode = $this->exceptionMap[0];
+            $realHttpErrorCode = $outgoingHttpStatusCode = $this->exceptionMap[$exceptionClass][0];
             $errorMessage =
                 (isset($this->exceptionMap[$exceptionClass][1]))
                 ? $this->exceptionMap[$exceptionClass][1]

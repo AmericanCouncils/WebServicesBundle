@@ -40,7 +40,8 @@ class ApiBootstrapListener
                     $this->container->getParameter('ac_web_services.default_response_format'),
                     $this->container->getParameter('ac_web_services.include_response_data'),
                     $this->container->getParameter('ac_web_services.allow_code_suppression'),
-                    $this->container->getParameter('ac_web_services.include_dev_exceptions')
+                    $this->container->getParameter('ac_web_services.include_dev_exceptions'),
+                    $this->container->getParameter('ac_web_services.exception_map')
                 );
 
                 //register subscriber with dispatcher
