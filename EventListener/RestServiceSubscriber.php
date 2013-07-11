@@ -137,11 +137,8 @@ class RestServiceSubscriber implements EventSubscriberInterface
 
         //log the error
         // FIXME: shouldn't Symfony's default error logger already handle this?
-        $this->container->get('logger')->err(
-            "REST service error: " .
-            $exception->getMessage() . "\n" .
-            print_r(debug_backtrace($exception))
-        );
+        $this->container->get('logger')
+            ->err("REST service error: " .  $exception->__toString());
 
         //preserve specific http exception codes and messages, otherwise it's 500
         $realHttpErrorCode = $outgoingHttpStatusCode = 500;
