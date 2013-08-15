@@ -16,6 +16,6 @@
     },
     "minimum-stability": "stable",
     "require": {
-        "jms/serializer-bundle": ">=0.11"
+        "jms/serializer-bundle": "~0.11.0"
     }
 }
