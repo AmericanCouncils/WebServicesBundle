@@ -14,7 +14,7 @@
     "autoload": {
         "psr-0": { "AC\\WebServicesBundle": "" }
     },
-    "minimum-stability": "dev",
+    "minimum-stability": "stable",
     "require": {
         "jms/serializer-bundle": ">=0.11"
     }
