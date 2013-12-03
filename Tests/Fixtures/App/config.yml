@@ -35,9 +35,26 @@ jms_serializer:
         auto_detection: true
 
 ac_web_services:
-    include_dev_exceptions: true #TODO: change to "include_exception_data"
-    include_response_data: true
-    allow_code_suppression: true
-    default_response_format: json
-    api_paths:
-        - "{^/api/}"
+    response_format_headers:
+        json:
+            'content-type': 'application/json'
+        jsonp:
+            'content-type': 'text/javascript'
+    paths:
+        '{^/api/override}':
+            include_exception_data: false
+            include_response_data: false
+            allow_code_suppression: false
+            allow_jsonp: false
+            default_response_format: json
+            http_exception_map:
+                'AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\BundleException': {code: 403, message: 'Custom error message'}
+            additional_headers:
+                'x-custom-acwebservices': 'foo-bar-baz'
+        '{^/api/}':
+            include_exception_data: true
+            include_response_data: true
+            allow_code_suppression: true
+            allow_jsonp: true
+            default_response_format: json
+            additional_headers: null

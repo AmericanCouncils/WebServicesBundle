@@ -7,6 +7,9 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Symfony\Component\HttpFoundation\Response;
 use AC\WebServicesBundle\ServiceResponse;
+use AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\BundleException;
+use AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\Model\Person;
+use AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\Model\Group;
 
 class Controllers extends Controller
 {
@@ -19,17 +22,41 @@ class Controllers extends Controller
     }
 
     /**
-     * @Route("/api/defaults")
+     * @Route("/api/override/success")
      **/
-    public function apiDefaultsAction()
+    public function apiOverrideSuccessAction()
+    {
+        return new ServiceResponse(array('person' => new Model\Person('John', 86)));
+    }
+
+    /**
+     * @Route("/api/override/fail")
+     **/
+    public function apiOverrideFailAction()
+    {
+        return new ServiceResponse(array('person' => new Model\Person('John', 86)));
+    }
+
+    /**
+     * @Route("/api/success")
+     **/
+    public function apiSuccessAction()
     {
 
     }
 
     /**
-     * @Route("/api/overrides")
+     * @Route("/api/fail")
      **/
-    public function apiOverridesAction()
+    public function apiFailAction()
+    {
+
+    }
+
+    /**
+     * @Route("/api/fail/exception-map")
+     **/
+    public function apiFailExceptionMapAction()
     {
 
     }
