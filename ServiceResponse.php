@@ -3,7 +3,8 @@
 namespace AC\WebServicesBundle;
 
 /**
- * Note that this does not extend the HttpFoundation Response for a reason, so there is some duplicate functionality.
+ * Note that this does not extend the HttpFoundation Response for a reason, so there is some duplicate functionality.  This Response type allows
+ * the bundle to implement custom response logic for all api requests - primarily for the purposes of serializing response data.
  *
  * @package ACWebServicesBundle
  * @author Evan Villemez

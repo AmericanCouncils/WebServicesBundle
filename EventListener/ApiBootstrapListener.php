@@ -6,7 +6,9 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpKernel\Event\GetResponseEvent;
 
 /**
- * A listener that monitors for incoming Api requests.  When detected, registers the RestWorkflowSubscriber to handle generic REST API functionality.
+ * A listener that monitors for incoming API requests.  When detected, registers the RestWorkflowSubscriber to handle generic REST API functionality.
+ *
+ * TODO: Consider manually calling an `onApiEarlyRequest` and an `onApiLateRequest` method.
  */
 class ApiBootstrapListener
 {

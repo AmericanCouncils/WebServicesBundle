@@ -2,7 +2,7 @@
 
 This bundle provides generic api workflow tools for developing RESTful apis.
 
-*NIH:*  A lot of the functionality in this bundle already exists in [FOSRestBundle](), use that if you want safety.
+*NIH:*  A lot of the functionality in this bundle already exists in [FOSRestBundle](https://github.com/FriendsOfSymfony/FOSRestBundle), use that if you want safety.
 
 ## Features ##
 
