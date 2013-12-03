@@ -17,10 +17,6 @@ use Symfony\Component\HttpFoundation\Response;
 use AC\WebServicesBundle\ServiceResponse;
 
 /**
- * TODO: Need to make formatHeaders configurable
- */
-
-/**
  * A listener that monitors input/output for all REST api requests.
  *
  * @author Evan Villemez
@@ -40,17 +36,7 @@ class RestServiceSubscriber implements EventSubscriberInterface
      */
     protected $container;
 
-    /**
-     * Array of content-type headers to used, keyed by requested serialization format.
-     *
-     * @var array
-     */
-    protected $formatHeaders = array(
-        'json' => 'application/json',
-        'xml' => 'application/xml',
-        'yml' => 'text/yaml',
-        'html' => 'text/html'
-    );
+    protected $formatHeaders;
 
     private $defaultResponseFormat;
 
@@ -76,7 +62,16 @@ class RestServiceSubscriber implements EventSubscriberInterface
      * @param ContainerInterface $container
      * @param string             $defaultResponseFormat
      */
-    public function __construct(ContainerInterface $container, $defaultResponseFormat, $includeResponseData, $allowCodeSuppression, $includeDevExceptions, $exceptionMap = array())
+    public function __construct(
+        ContainerInterface $container,
+        $defaultResponseFormat,
+        $includeResponseData,
+        $allowCodeSuppression,
+        $includeDevExceptions,
+        $exceptionMap,
+        $allowJsonp,
+        $formatHeaders
+    )
     {
         $this->container = $container;
         $this->defaultResponseFormat = $this->responseFormat = $defaultResponseFormat;
@@ -84,10 +79,13 @@ class RestServiceSubscriber implements EventSubscriberInterface
         $this->exceptionMap = $exceptionMap;
         $this->allowCodeSuppression = $allowCodeSuppression;
         $this->includeDevExceptions = $includeDevExceptions;
+        $this->allowJsonp = $allowJsonp;
+        $this->formatHeaders = $formatHeaders;
     }
 
     /**
-     * {@inheritdoc}
+     * This fires its own api life-cycle events during the normal kernel events, allowing other code to differentiate between
+     * regular requests and "api" requests.
      */
     public static function getSubscribedEvents()
     {
@@ -268,7 +266,7 @@ class RestServiceSubscriber implements EventSubscriberInterface
             $this->responseFormat = 'json';
             $this->isJsonp = true;
             if (!$this->jsonpCallback = $request->query->get('_callback', false)) {
-                throw new HttpException(400, "The [_callback] parameter is missing, and is required for JSONP responses.");
+                throw new HttpException(400, "The [_callback] parameter is required for JSONP responses.");
             }
 
             if ("GET" !== $request->getMethod()) {

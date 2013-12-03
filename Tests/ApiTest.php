@@ -4,6 +4,9 @@ namespace AC\WebServicesBundle\Tests;
 
 use AC\WebServicesBundle\TestCase;
 
+/**
+ * These tests check that API behavior changes between sets of routes that configured differently.
+ **/
 class ConfigurableFeaturesTest extends TestCase
 {
     public function testCallApi()
@@ -21,7 +24,7 @@ class ConfigurableFeaturesTest extends TestCase
     public function testChangeResponseFormat()
     {
         //try in query _format
-        //try in path{.format}
+        //try in path{._format}
     }
 
     public function testSuppressResponseCodes()
@@ -34,7 +37,7 @@ class ConfigurableFeaturesTest extends TestCase
 
     }
 
-    public function testJsonpResponse()
+    public function testAllowJsonp()
     {
 
     }
@@ -44,14 +47,23 @@ class ConfigurableFeaturesTest extends TestCase
 
     }
 
+    public function testHttpExceptionMap()
+    {
+
+    }
+
     public function testResponseFormatHeaders()
     {
 
     }
 
-    public function testExceptionMap()
+    public function testUnsupportedFormat()
     {
 
     }
 
+    public function testBadJsonp()
+    {
+
+    }
 }

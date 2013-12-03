@@ -11,6 +11,10 @@ use AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\BundleException;
 use AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\Model\Person;
 use AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\Model\Group;
 
+/**
+ * These controller routes are called by various tests to ensure any API responds as expected based
+ * on how it is configured.
+ **/
 class Controllers extends Controller
 {
     /**
@@ -34,7 +38,7 @@ class Controllers extends Controller
      **/
     public function apiOverrideFailAction()
     {
-        return new ServiceResponse(array('person' => new Model\Person('John', 86)));
+        throw new BundleException();
     }
 
     /**
@@ -42,7 +46,7 @@ class Controllers extends Controller
      **/
     public function apiSuccessAction()
     {
-
+        return new ServiceResponse(array('person' => new Model\Person('John', 86)));
     }
 
     /**
@@ -50,7 +54,7 @@ class Controllers extends Controller
      **/
     public function apiFailAction()
     {
-
+        throw new \LogicException();
     }
 
     /**
@@ -58,6 +62,6 @@ class Controllers extends Controller
      **/
     public function apiFailExceptionMapAction()
     {
-
+        throw new BundleException();
     }
 }

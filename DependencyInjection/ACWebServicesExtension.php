@@ -12,14 +12,16 @@ class ACWebServicesExtension extends Extension
     {
         //load services
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
-        $loader->load('services.yml');
+        $loader->load('config.yml');
 
         //process config from app
         $config = $this->processConfiguration(new Configuration(), $configs);
 
+        //merge default format headers w/ user defined ones
+        $formatHeaders = array_merge($container->getParameter('ac_web_services.default_format_headers'), $config['response_format_headers']);
+
         //set config values in the container based on processed values
-        foreach ($config as $key => $val) {
-            $container->setParameter('ac_web_services.'.$key, $val);
-        }
+        $container->setParameter('ac_web_services.paths', $config['paths']);
+        $container->setParameter('ac_web_services.response_format_headers', $formatHeaders);
     }
 }

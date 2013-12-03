@@ -17,12 +17,12 @@ class ApiBootstrapListener
      */
     protected $container;
 
-    protected $paths;
+    protected $pathConfig;
 
-    public function __construct(ContainerInterface $container, $paths = array())
+    public function __construct(ContainerInterface $container)
     {
         $this->container = $container;
-        $this->paths = $paths;
+        $this->pathConfig = $container->getParameter('ac_web_services.paths');
     }
 
     /**
@@ -34,16 +34,18 @@ class ApiBootstrapListener
     {
         $request = $e->getRequest();
 
-        foreach ($this->paths as $regex) {
+        foreach ($this->pathConfig as $regex => $config) {
             if (preg_match($regex, $request->getPathInfo())) {
                 //build rest subscriber
                 $subscriber = new RestServiceSubscriber(
                     $this->container,
-                    $this->container->getParameter('ac_web_services.default_response_format'),
-                    $this->container->getParameter('ac_web_services.include_response_data'),
-                    $this->container->getParameter('ac_web_services.allow_code_suppression'),
-                    $this->container->getParameter('ac_web_services.include_dev_exceptions'),
-                    $this->container->getParameter('ac_web_services.exception_map')
+                    $config['default_response_format'],
+                    $config['include_response_data'],
+                    $config['allow_code_suppression'],
+                    $config['include_exception_data'],
+                    $config['http_exception_map'],
+                    $config['allow_jsonp'],
+                    $this->container->getParameter('ac_web_services.response_format_headers')
                 );
 
                 //register subscriber with dispatcher
