@@ -88,6 +88,7 @@ class WebServiceSubscriber implements EventSubscriberInterface
     public function __construct(ContainerInterface $container, EventDispatcherInterface $dispatcher, $formatHeaders = array(), $pathConfig = array())
     {
         $this->container = $container;
+        $this->dispatcher = $dispatcher;
         $this->formatHeaders = $formatHeaders;
         $this->pathConfig = $pathConfig;
     }
@@ -129,7 +130,7 @@ class WebServiceSubscriber implements EventSubscriberInterface
                 }
 
                 //set other relevant values for this request
-                $config['suppress_codes'] = ($config['allow_code_suppression']) ? $request->query->get('_suppress_codes', false) : false;
+                $config['suppress_response_codes'] = ($config['allow_code_suppression']) ? $request->query->get('_suppress_codes', false) : false;
                 $this->currentPathConfig = $config;
 
                 return;
@@ -165,7 +166,7 @@ class WebServiceSubscriber implements EventSubscriberInterface
     /**
      * Called if an exception was thrown at any point.
      */
-    public function onApiException(GetResponseForExceptionEvent $e)
+    public function onKernelException(GetResponseForExceptionEvent $e)
     {
         if (!$this->enabled) return;
 
@@ -208,7 +209,7 @@ class WebServiceSubscriber implements EventSubscriberInterface
         );
 
         //inject exception data if we're in dev mode and enabled
-        if ($this->includeDevExceptions && in_array($this->container->get('kernel')->getEnvironment(), array('dev','test'))) {
+        if ($cfg['include_exception_data'] && in_array($this->container->get('kernel')->getEnvironment(), array('dev','test'))) {
             $errorData['exception'] = array(
                 'class' => get_class($exception),
                 'message' => $exception->getMessage(),
@@ -238,7 +239,7 @@ class WebServiceSubscriber implements EventSubscriberInterface
     /**
      * Called when a response object has been resolved.
      */
-    public function onApiResponse(FilterResponseEvent $e)
+    public function onKernelResponse(FilterResponseEvent $e)
     {
         if (!$this->enabled) return;
 
@@ -253,7 +254,7 @@ class WebServiceSubscriber implements EventSubscriberInterface
     /**
      * Called when a controller does not return a response object.  Checks specifically for data structures to be serialized.
      */
-    public function onApiView(GetResponseForControllerResultEvent $e)
+    public function onKernelView(GetResponseForControllerResultEvent $e)
     {
         if (!$this->enabled) return;
 
@@ -315,7 +316,7 @@ class WebServiceSubscriber implements EventSubscriberInterface
     /**
      * Called after a response has already been sent.
      */
-    public function onApiTerminate(PostResponseEvent $e)
+    public function onKernelTerminate(PostResponseEvent $e)
     {
         if (!$this->enabled) return;
 

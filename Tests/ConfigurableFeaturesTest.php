@@ -18,7 +18,15 @@ class ConfigurableFeaturesTest extends TestCase
 
     public function testIncludeResponseData()
     {
+        $data = json_decode($this->callApi('GET', '/api/override/success')->getContent(), true);
+        $this->assertTrue(isset($data['person']));
+        $this->assertFalse(isset($data['response']));
 
+        $data = json_decode($this->callApi('GET', '/api/success')->getContent(), true);
+        $this->assertTrue(isset($data['person']));
+        $this->assertTrue(isset($data['response']));
+        $this->assertSame(200, $data['response']['code']);
+        $this->assertSame('OK', $data['response']['message']);
     }
 
     public function testChangeResponseFormat()
