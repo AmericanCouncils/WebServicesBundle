@@ -3,9 +3,7 @@
 namespace AC\WebServicesBundle\Util;
 
 /**
- * A utility class for parsing data type declarations required by the Parsers.
- *
- * See the docs for `ParserInterface::parse` for more on accepted data types.
+ * A utility class for parsing data type declarations as defined by the JMS Serializer.
  */
 class JmsDataTypeParser
 {
@@ -16,7 +14,7 @@ class JmsDataTypeParser
      * @param  string  $type
      * @return boolean
      */
-    public function isPrimitive($type)
+    public static function isPrimitive($type)
     {
         return in_array($type, array('boolean', 'integer', 'string', 'double', 'array', 'DateTime'));
     }
@@ -35,8 +33,10 @@ class JmsDataTypeParser
      * @param  string     $type
      * @return array|null
      */
-    public function getNestedTypeInArray($type)
+    public static function getNestedTypeInArray($type)
     {
+        //TODO: check for new datetime format
+        
         //could be some type of array with <V>, or <K,V>
         $regEx = "/\<([A-Za-z0-9\\\]*)(\,?\s?(.*))?\>/";
         if (preg_match($regEx, $type, $matches)) {
@@ -53,16 +53,16 @@ class JmsDataTypeParser
             );
         }
 
-        return null;
+        return false;
     }
 
-    public function getNestedObjectInArray($type)
+    public static function getNestedObjectInArray($type)
     {
-        if ($nested = $this->getNestedTypeInArray() && !$this->isPrimitive($nested['value'])) {
+        if ($nested = self::getNestedTypeInArray($type) && !self::isPrimitive($nested['value'])) {
             return $nested;
         }
 
-        return null;
+        return false;
     }
 
 }
