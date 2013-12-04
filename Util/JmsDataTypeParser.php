@@ -36,7 +36,7 @@ class JmsDataTypeParser
     public static function getNestedTypeInArray($type)
     {
         //TODO: check for new datetime format
-        
+
         //could be some type of array with <V>, or <K,V>
         $regEx = "/\<([A-Za-z0-9\\\]*)(\,?\s?(.*))?\>/";
         if (preg_match($regEx, $type, $matches)) {

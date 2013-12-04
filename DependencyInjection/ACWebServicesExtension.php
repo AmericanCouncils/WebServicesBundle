@@ -21,7 +21,7 @@ class ACWebServicesExtension extends Extension
         $formatHeaders = array_merge($container->getParameter('ac_web_services.default_format_headers'), $config['response_format_headers']);
 
         //set config values in the container based on processed values
-        $container->setParameter('ac_web_services.paths', $config['paths']);
+        $container->setParameter('ac_web_services.path_config', $config['paths']);
         $container->setParameter('ac_web_services.response_format_headers', $formatHeaders);
     }
 }

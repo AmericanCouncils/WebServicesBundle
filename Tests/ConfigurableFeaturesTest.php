@@ -57,13 +57,4 @@ class ConfigurableFeaturesTest extends TestCase
 
     }
 
-    public function testUnsupportedFormat()
-    {
-
-    }
-
-    public function testBadJsonp()
-    {
-
-    }
 }
