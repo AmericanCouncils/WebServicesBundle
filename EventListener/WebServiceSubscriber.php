@@ -125,7 +125,7 @@ class WebServiceSubscriber implements EventSubscriberInterface
                 $this->enabled = true;
 
                 if (!$this->subscribed) {
-                    $this->dispatcher->addSubscriber($this);
+                    $e->getDispatcher()->addSubscriber($this);
                     $this->subscribed = true;
                 }
 
@@ -160,7 +160,7 @@ class WebServiceSubscriber implements EventSubscriberInterface
             throw new HttpException(415);
         }
 
-        $this->dispatcher->dispatch(self::API_REQUEST, $e);
+        $e->getDispatcher()->dispatch(self::API_REQUEST, $e);
     }
 
     /**
@@ -173,7 +173,7 @@ class WebServiceSubscriber implements EventSubscriberInterface
         $cfg = $this->currentPathConfig;
 
         //notify of generic API error, return early if a response gets set
-        $this->dispatcher->dispatch(self::API_EXCEPTION, $e);
+        $e->getDispatcher()->dispatch(self::API_EXCEPTION, $e);
         if ($e->getResponse()) {
             return;
         }
@@ -241,6 +241,7 @@ class WebServiceSubscriber implements EventSubscriberInterface
      */
     public function onKernelResponse(FilterResponseEvent $e)
     {
+
         if (!$this->enabled) return;
 
         //if supression is active, always return 200 no matter what
@@ -248,7 +249,7 @@ class WebServiceSubscriber implements EventSubscriberInterface
             $response = $e->getResponse()->setStatusCode(200);
         }
 
-        $this->dispatcher->dispatch(self::API_RESPONSE, $e);
+        $e->getDispatcher()->dispatch(self::API_RESPONSE, $e);
     }
 
     /**
@@ -307,7 +308,7 @@ class WebServiceSubscriber implements EventSubscriberInterface
         }
 
         //merge headers
-        $headers = array_merge($headers, array_merge($cfg['additional_headers'], $this->formatHeaders[$format]));
+        $headers = array_merge($headers, array_merge($cfg['additional_headers'], $this->formatHeaders[$cfg['response_format']]));
 
         //set the final response
         $e->setResponse(new Response($content, $outgoingStatusCode, $headers));
@@ -320,19 +321,21 @@ class WebServiceSubscriber implements EventSubscriberInterface
     {
         if (!$this->enabled) return;
 
-        $this->dispatcher->dispatch(self::API_TERMINATE, $e);
+        $e->getDispatcher()->dispatch(self::API_TERMINATE, $e);
     }
 
     protected function checkForJsonp(Request $request)
     {
+        $cfg = $this->currentPathConfig;
+
         //check for jsonp, make sure it's valid
-        if ('jsonp' === $this->responseFormat) {
-            if (!$this->currentPathConfig['allow_jsonp']) {
+        if ('jsonp' === $cfg['response_format']) {
+            if (!$cfg['allow_jsonp']) {
                 throw new HttpException(415, '[jsonp] is not a supported format.');
             }
 
             //ensure jsonp callback is specified
-            if (!$this->currentPathConfig['jsonp_callback'] = $request->query->get('_callback', false)) {
+            if (!$cfg['jsonp_callback'] = $request->query->get('_callback', false)) {
                 throw new HttpException(400, "The [_callback] parameter is required for JSONP responses.");
             }
 
@@ -351,7 +354,7 @@ class WebServiceSubscriber implements EventSubscriberInterface
     {
         //TODO: eventual robust content negotiation here, for now just check request for explicit declaration
         //TODO: negotiate based on accept headers
-        $responseFormat = strtolower($request->get('_format', $this->defaultResponseFormat));
+        $responseFormat = strtolower($request->get('_format', $this->currentPathConfig['default_response_format']));
 
         return $responseFormat;
     }

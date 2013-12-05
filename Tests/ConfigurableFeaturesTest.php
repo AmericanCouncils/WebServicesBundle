@@ -22,6 +22,7 @@ class ConfigurableFeaturesTest extends TestCase
     public function testCallApiRoute()
     {
         $res = $this->callApi('GET', '/api/success');
+        var_dump($res->getContent());
         $this->assertSame(200, $res->getStatusCode());
 
         $data = json_decode($res->getContent(), true);
@@ -69,22 +70,22 @@ class ConfigurableFeaturesTest extends TestCase
         $this->assertSame(500, $res->getStatusCode());
     }
 
-    public function testAllowJsonp()
+    public function _testAllowJsonp()
     {
 
     }
 
-    public function testAdditionalHeaders()
+    public function _testAdditionalHeaders()
     {
 
     }
 
-    public function testHttpExceptionMap()
+    public function _testHttpExceptionMap()
     {
 
     }
 
-    public function testResponseFormatHeaders()
+    public function _testResponseFormatHeaders()
     {
 
     }
