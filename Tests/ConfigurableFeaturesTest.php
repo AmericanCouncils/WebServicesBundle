@@ -9,14 +9,26 @@ use AC\WebServicesBundle\TestCase;
  **/
 class ConfigurableFeaturesTest extends TestCase
 {
-    public function testCallApi()
+    public function testCallNonApiRoute()
     {
+        $res = $this->callApi('GET', '/no-api');
+        $this->assertSame(200, $res->getStatusCode());
+
         $expected = 'hello world';
-        $actual = $this->callApi('GET', '/no-api')->getContent();
+        $actual = $res->getContent();
         $this->assertSame($expected, $actual);
     }
 
-    public function testIncludeResponseData()
+    public function testCallApiRoute()
+    {
+        $res = $this->callApi('GET', '/api/success');
+        $this->assertSame(200, $res->getStatusCode());
+
+        $data = json_decode($res->getContent(), true);
+        $this->assertTrue(isset($data['person']));
+    }
+
+    public function _testIncludeResponseData()
     {
         $data = json_decode($this->callApi('GET', '/api/override/success')->getContent(), true);
         $this->assertTrue(isset($data['person']));
@@ -29,20 +41,32 @@ class ConfigurableFeaturesTest extends TestCase
         $this->assertSame('OK', $data['response']['message']);
     }
 
-    public function testChangeResponseFormat()
+    public function _testSuppressResponseCodes()
     {
-        //try in query _format
-        //try in path{._format}
+        $res = $this->callApi('GET','/api/override/fail?_suppress_codes=true');
+        $body = json_decode($res->getContent(), true);
+        $this->assertSame(500, $res->getStatusCode());
+        $this->assertSame(500, $body['response']['code']);
+
+
+        $res = $this->callApi('GET','/api/fail?_suppress_codes=true');
+        $body = json_decode($res->getContent(), true);
+        $this->assertSame(200, $res->getStatusCode());
+        $this->assertSame(500, $body['response']['code']);
     }
 
-    public function testSuppressResponseCodes()
+    public function _testIncludeExceptionData()
     {
+        $res = $this->callApi('GET','/api/override/fail');
+        $body = json_decode($res->getContent(), true);
+        $this->assertFalse(isset($body['exception']));
+        $this->assertSame(500, $res->getStatusCode());
 
-    }
 
-    public function testIncludeExceptionData()
-    {
-
+        $res = $this->callApi('GET','/api/fail');
+        $body = json_decode($res->getContent(), true);
+        $this->assertTrue(isset($body['exception']));
+        $this->assertSame(500, $res->getStatusCode());
     }
 
     public function testAllowJsonp()

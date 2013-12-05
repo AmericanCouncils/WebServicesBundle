@@ -9,6 +9,7 @@ use AC\WebServicesBundle\TestCase;
  **/
 class ResponseFormatTest extends TestCase
 {
+
     public function testGetJson()
     {
 
@@ -27,6 +28,18 @@ class ResponseFormatTest extends TestCase
     public function testGetYaml()
     {
 
+    }
+
+    /**
+     * Ensures that you can change the response format both explicitly in
+     * the query string, but also in the path, if the routing is configured
+     * to recognize it.
+     *
+     **/
+    public function testChangeResponseFormat()
+    {
+        //try in query _format
+        //try in path{._format}
     }
 
     public function testGetTemplate()
