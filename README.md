@@ -2,7 +2,7 @@
 
 This bundle provides generic api workflow tools for developing RESTful apis.
 
-*NIH:*  A lot of the functionality in this bundle already exists in [FOSRestBundle](), use that if you want safety.
+*NIH:*  A lot of the functionality in this bundle already exists in [FOSRestBundle](https://github.com/FriendsOfSymfony/FOSRestBundle), use that if you want safety.  This is periodically under heavy development.
 
 ## Features ##
 
@@ -10,13 +10,41 @@ This bundle provides generic api workflow tools for developing RESTful apis.
 * Object de-serializer that leverages JMS Metadata to serialize incoming data into already existing objects
 * Optionally include response data as part of the outgoing response
 * By default handles xml, json, jsonp and yml responses
+* Easily convert validation errors to useful API responses
 
 ## Usage ##
 
-To activate the event listeners that handle API requests, provide the `ac.webservices.api_paths` config to specify an array of API routes you want to be handled.  If it matches, event listeners will be added to invoke content format negotiation, error handling, and view handling, which will allow you to return raw data structures and objects that will automatically be encoded into the requested format.
+Generally speaking, you configure some general behavior for your API by setting values that apply to certain routes.  Here's example config:
 
-From your controllers you can return raw data structures, which may include objects configured for serialized via the `JMSSerializerBundle`.  Information returned
-from a controller will automatically be serialized into the requested data transfer format by the `serializer` service.
+```yaml
+ac_web_services:
+
+    #defaults for content-type header are provided per response format, but you may include custom headers as well
+    response_format_headers:
+        json:
+            'content-type': 'application/json'
+        jsonp:
+            'content-type': 'text/javascript'
+    paths:
+        '{^/api/override}':
+            include_exception_data: false           #very helpful for debugging
+            include_response_data: false            #easier for some clients to parse
+            allow_code_suppression: false           #for clients that don't really respect http and intercept errors
+            allow_jsonp: false                      #if you really have to...
+            default_response_format: json           
+            http_exception_map:                     #you may want/need to convert some exceptions for the end clients
+                'AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\BundleException': { code: 403, message: 'Custom error message' }
+            additional_headers:                     #just because... maybe it'll be useful?
+                'x-custom-acwebservices': 'foo-bar-baz'
+        '{^/api/}':
+            include_exception_data: true
+            include_response_data: true
+            allow_code_suppression: true
+            allow_jsonp: true
+            default_response_format: json
+```
+
+When a request matches a configured path, an event subscriber is registered with the relevant configuration.  This subscriber fires extra api events, similar to the kernel events.  From your controllers you can return raw data structures, which may include objects configured for serialization via the `JMSSerializerBundle`.  Information returned from a controller will automatically be serialized into the requested data transfer format by the `serializer` service.
 
 For example:
 
@@ -48,22 +76,13 @@ For example:
             "baz": 23
         }
         
-> Note that changing the `_format` parameter to `xml` or `yml` will return the data structure in those formats as well.  Custom serialization formats
-> can also be supported via the `JMSSerializerBundle`.
+> Note that changing the `_format` parameter to `xml` or `yml` will return the data structure in those formats as well.
 
-> Note: If the `_format` parameter is absent, a default format wil be returned, which is usually `json`.  Also, the response format can be configured by setting
-> the appropriate request `accept` headers.
+> Note: If the `_format` parameter is absent, a default format wil be returned, which is usually `json`.
 
 ### Configuration ###
 
 This is an brief description of all configuration options provided by the bundle, more detailed descriptions are given below.
-
-* `ac.webservices.api_paths` - an array of regex expressions to match routes which should be considered "api routes"
-* `ac.webservices.allow_code_suppression` - boolean for whether or not to allow clients to suppress the http response codes, and always return `200` responses
-* `ac.webservices.include_response_data` - boolean for whether or not to include the response code and message in the response data structure
-* `ac.webservices.exception_map` - a map of exception classes, and the http code and message that should be returned if they are encountered, if not specified, all exceptions (excluding `HttpException`) return `500`
-* `ac.webservices.default_response_format` - the default response format, if not specified `json` is assumed, but you can change this
-* `ac.webservices.include_dev_exceptions` - boolean for whether or not to include detailed exception information in API responses if in dev mode
 
 ### Response data & code suppression ###
 
@@ -75,7 +94,7 @@ Also, in some cases, some clients do not properly respect the actual HTTP spec. 
 allows you to make API requests that always return a `200` response code.  If this happens, the actual HTTP code and message
 will still be set properly in the response body.
 
-The example response above, if `ac.webservices.include_response_data` is `true`, would look like this:
+The example response above, if `include_response_data` is `true`, would look like this:
 
     {
         "response": {
@@ -107,21 +126,16 @@ Exceptions return the response data structure described above, for example:
         }
     }
 
-Example configuration to map specific exceptions to their codes/messages:
+#### ValidationException ####
 
-    //app/config/config.yml
-    ac.webservices.exception_map:
-        MyBundle\Custom\Exception: [405, "This is bad..."],
-        
-        # if you don't specify a message, the default text for the code will be used
-        AnotherBundle\Custom\Exception: [400]
+    TODO: document ValidationException, see https://github.com/AmericanCouncils/WebServicesBundle/issues/3
 
 ### Events ###
 
 When handling api requests, the bundle fires a few extra events for all API requests.  These are useful hooks for triggering other 
-functionality, such as logging, that should apply to all API services routes.  The events fired include:
+functionality, such as logging or metrics gathering, that should apply to all API service routes.  The events fired include:
 
-* `webservice.request` - When an API request is initiated
+* `webservice.request` - When an API request is initiated, and has successfully been matched to a controller
 * `webservice.exception` - If an error is encountered during an API route
 * `webservice.response` - The final response from the API
 * `webservice.terminate` - After the API response has been sent
@@ -131,14 +145,4 @@ subscribers to multiple events via the `ac.webservice.subscriber` tag.
 
 ### Services ###
 
-* `ac.webservices.object_validator` - This service will use the JMS serializer and its metadata to create, or modify pre-existing
-objects from a client's incoming request.  It doesn't support all JMS features yet, and it would probably be best implemented as
-an extension to the serializer.
-
-Usage:
-        
-        // ... get previous object
-
-        $this->container->get('ac.webservices.object_validator')->modifyObjectFromRequest($this->getRequest(), 'MyBundle\Namespaced\Class', $previousObject);
-        
-        // ... $previousObject now contains the modifications from the incoming data
+    TODO: document extra JMS stuff that allows serializing into objects

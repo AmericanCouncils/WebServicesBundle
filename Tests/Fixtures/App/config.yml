@@ -1,0 +1,59 @@
+framework:
+    secret:          secretslol
+    router:          { resource: "@FixtureBundle/routing.yml" }
+    form:            true
+    csrf_protection: true
+    session:         ~
+    default_locale:  en
+    translator:      { fallback: en }
+    profiler:        { only_exceptions: false }
+    test: ~
+    annotations:
+        cache:                file
+        file_cache_dir:       %kernel.cache_dir%/annotations
+        debug:                %kernel.debug%
+
+sensio_framework_extra:
+    router:  { annotations: true }
+    #request: { converters: true }
+    #view:    { annotations: true }
+    cache:   { annotations: true }
+
+jms_serializer:
+    handlers:
+        datetime:
+            default_format: "Y-m-dTH:i:s" # ISO8601
+            default_timezone: "UTC" # defaults to whatever timezone set in php.ini or via date_default_timezone_set
+    property_naming:
+        separator:
+        lower_case: true
+    metadata:
+        cache: file
+        debug: "%kernel.debug%"
+        file_cache:
+            dir: "%kernel.cache_dir%/serializer"
+        auto_detection: true
+
+ac_web_services:
+    response_format_headers:
+        json:
+            'content-type': 'application/json'
+        jsonp:
+            'content-type': 'text/javascript'
+    paths:
+        '{^/api/override}':
+            include_exception_data: false
+            include_response_data: false
+            allow_code_suppression: false
+            allow_jsonp: false
+            default_response_format: json
+        '{^/api/}':
+            include_exception_data: true
+            include_response_data: true
+            allow_code_suppression: true
+            allow_jsonp: true
+            default_response_format: json
+            http_exception_map:
+                'AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\BundleException': { code: 403, message: 'Custom error message' }
+            additional_headers:
+                'x-custom-acwebservices': 'foo-bar-baz'

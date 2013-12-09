@@ -1,0 +1,3 @@
+examples:
+    resource: "@FixtureBundle/Controllers.php"
+    type:     annotation
