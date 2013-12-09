@@ -47,13 +47,13 @@ ac_web_services:
             allow_code_suppression: false
             allow_jsonp: false
             default_response_format: json
-            http_exception_map:
-                'AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\BundleException': { code: 403, message: 'Custom error message' }
-            additional_headers:
-                'x-custom-acwebservices': 'foo-bar-baz'
         '{^/api/}':
             include_exception_data: true
             include_response_data: true
             allow_code_suppression: true
             allow_jsonp: true
             default_response_format: json
+            http_exception_map:
+                'AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\BundleException': { code: 403, message: 'Custom error message' }
+            additional_headers:
+                'x-custom-acwebservices': 'foo-bar-baz'

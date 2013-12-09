@@ -14,7 +14,7 @@ services:
     # responsible for instantiating the API request listeners for matching paths
     ac_web_services.kernel_listeners:
         class:        AC\WebServicesBundle\EventListener\WebServiceSubscriber
-        arguments:    [@service_container, @event_dispatcher, %ac_web_services.response_format_headers%, %ac_web_services.path_config%]
+        arguments:    [@service_container, %ac_web_services.response_format_headers%, %ac_web_services.path_config%]
         tags:
             -  { name: kernel.event_listener, event: kernel.request, method: onKernelEarlyRequest, priority: 255 }
             -  { name: kernel.event_listener, event: kernel.request, method: onKernelLateRequest, priority: -255 }

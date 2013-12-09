@@ -81,14 +81,12 @@ class WebServiceSubscriber implements EventSubscriberInterface
      * Constructor.
      *
      * @param ContainerInterface       $container
-     * @param EventDispatcherInterface $dispatcher
      * @param array                    $formatHeaders
      * @param array                    $pathConfig
      */
-    public function __construct(ContainerInterface $container, EventDispatcherInterface $dispatcher, $formatHeaders = array(), $pathConfig = array())
+    public function __construct(ContainerInterface $container, $formatHeaders = array(), $pathConfig = array())
     {
         $this->container = $container;
-        $this->dispatcher = $dispatcher;
         $this->formatHeaders = $formatHeaders;
         $this->pathConfig = $pathConfig;
     }
@@ -114,7 +112,6 @@ class WebServiceSubscriber implements EventSubscriberInterface
      * Listens early in the `kernel.request` cycle for incoming requests and checks for a matching path.  If a
      * match is found, the rest of the kernel listeners are registered and the relevant path config is stored
      * for use in those listeners.
-     *
      **/
     public function onKernelEarlyRequest(GetResponseEvent $e)
     {
