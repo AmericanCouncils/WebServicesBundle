@@ -81,17 +81,46 @@ class ConfigurableFeaturesTest extends TestCase
 
     public function testAdditionalHeaders()
     {
-        
+        $res = $this->callApi('GET', '/api/override/success');
+        $this->assertFalse($res->headers->get('x-custom-acwebservices', false));
+
+        $res = $this->callApi('GET', '/api/success');
+        $this->assertSame($res->headers->get('x-custom-acwebservices'), 'foo-bar-baz');
     }
 
     public function testHttpExceptionMap()
     {
+        $res = $this->callApi('GET','/api/override/fail');
+        $this->assertSame(500, $res->getStatusCode());
 
+        $res = $this->callApi('GET','/api/fail');
+        $this->assertSame(500, $res->getStatusCode());
+
+        $res = $this->callApi('GET','/api/fail/exception-map');
+        $this->assertSame(403, $res->getStatusCode());
+        $body = json_decode($res->getContent(), true);
+        $this->assertSame(403, $body['response']['code']);
+        $this->assertSame('Custom error message', $body['response']['message']);
     }
 
     public function testResponseFormatHeaders()
     {
+        $res = $this->callApi('GET', '/api/success?_format=json');
+        $this->assertSame(200, $res->getStatusCode());
+        $this->assertSame('application/json', $res->headers->get('Content-Type'));
 
+        $res = $this->callApi('GET', '/api/success?_format=jsonp&_callback=myFunc');
+        $this->assertSame(200, $res->getStatusCode());
+        $this->assertSame('application/javascript', $res->headers->get('Content-Type'));
+
+        #this one overridden from the app config
+        $res = $this->callApi('GET', '/api/success?_format=yml');
+        $this->assertSame(200, $res->getStatusCode());
+        $this->assertSame('text/x-yaml; charset=UTF-8', $res->headers->get('Content-Type'));
+
+        $res = $this->callApi('GET', '/api/success?_format=xml');
+        $this->assertSame(200, $res->getStatusCode());
+        $this->assertSame('application/xml', $res->headers->get('Content-Type'));
     }
 
 }

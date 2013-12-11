@@ -1,13 +1,17 @@
 parameters:
     ac_web_services.default_format_headers:
         json:
-            'content-type': 'application/json'
+            'Content-Type': 'application/json'
         jsonp:
-            'content-type': 'text/javascript'
+            'Content-Type': 'application/javascript'
         yml:
-            'content-type': 'application/yaml'
+            'Content-Type': 'application/yaml'
         xml:
-            'content-type': 'application/xml'
+            'Content-Type': 'application/xml'
+        html:
+            'Content-Type': 'text/html; charset=UTF-8'
+        xhtml:
+            'Content-Type': 'application/xhtml+xml'
 
 services:
 

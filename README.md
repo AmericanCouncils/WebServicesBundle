@@ -1,5 +1,7 @@
 # ACWebServicesBundle #
 
+[![Build Status](https://travis-ci.org/AmericanCouncils/WebServicesBundle.png?branch=master)](https://travis-ci.org/AmericanCouncils/WebServicesBundle)
+
 This bundle provides generic api workflow tools for developing RESTful apis.
 
 *NIH:*  A lot of the functionality in this bundle already exists in [FOSRestBundle](https://github.com/FriendsOfSymfony/FOSRestBundle), use that if you want safety.  This is periodically under heavy development.
