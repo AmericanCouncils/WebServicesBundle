@@ -11,11 +11,11 @@ env:
     - SYMFONY_VERSION=2.2.*
     - SYMFONY_VERSION=2.3.*
     - SYMFONY_VERSION=2.4.*
-    - SYMFONY_VERSION=dev-master
+#    - SYMFONY_VERSION=dev-master
 
-matrix:
-    allow_failures:
-        - env: SYMFONY_VERSION=dev-master
+#matrix:
+#    allow_failures:
+#        - env: SYMFONY_VERSION=dev-master
 
 before_script:
     - composer self-update

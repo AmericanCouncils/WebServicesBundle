@@ -1,6 +1,6 @@
 framework:
     secret:          secretslol
-    router:          { resource: "@FixtureBundle/routing.yml" }
+    router:          { resource: "@FixtureBundle/Resources/routing.yml" }
     form:            true
     csrf_protection: true
     session:         ~
@@ -36,10 +36,10 @@ jms_serializer:
 
 ac_web_services:
     response_format_headers:
-        json:
-            'content-type': 'application/json'
-        jsonp:
-            'content-type': 'text/javascript'
+        yml:
+            'Content-Type': 'text/x-yaml; charset=UTF-8'
+        csv:
+            'Content-Type': 'text/csv; charset=UTF-8'
     paths:
         '{^/api/override}':
             include_exception_data: false
