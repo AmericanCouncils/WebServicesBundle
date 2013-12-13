@@ -18,3 +18,15 @@ if ((!$loader = includeIfExists(__DIR__.'/../../vendor/autoload.php')) && (!$loa
 if (class_exists('Doctrine\Common\Annotations\AnnotationRegistry')) {
     \Doctrine\Common\Annotations\AnnotationRegistry::registerLoader(array($loader, 'loadClass'));
 }
+
+//hack to clear cache directories before running test scripts
+/*
+$tmpDir = sys_get_temp_dir().'/ACWebServicesBundleTests';
+if (file_exists($tmpDir)) {
+    foreach (new DirectoryIterator($tmpDir) as $fileInfo) {
+        if(!$fileInfo->isDot()) {
+            unlink($fileInfo->getPathname());
+        }
+    }
+}
+*/

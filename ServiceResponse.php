@@ -91,7 +91,7 @@ class ServiceResponse
         return isset($this->templates[$format]) ?: false;
     }
 
-    public function addTemplateForFormat($template, $format)
+    public function setTemplateForFormat($template, $formats)
     {
         foreach ((array) $formats as $format) {
             $this->templates[$format] = $template;

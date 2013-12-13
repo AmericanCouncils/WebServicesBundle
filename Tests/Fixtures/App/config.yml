@@ -8,6 +8,9 @@ framework:
     translator:      { fallback: en }
     profiler:        { only_exceptions: false }
     test: ~
+    templating:
+        cache: ~
+        engines: [twig]
     annotations:
         cache:                file
         file_cache_dir:       %kernel.cache_dir%/annotations

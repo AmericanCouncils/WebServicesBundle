@@ -46,45 +46,55 @@ class ResponseFormatTest extends TestCase
     public function testSetFormatAsPathArgument()
     {
         $res = $this->callApi('GET', '/api/success');
+        $this->assertSame(200, $res->getStatusCode());
         $this->assertSame('application/json', $res->headers->get('Content-Type'));
 
         $res = $this->callApi('GET', '/api/success?_format=json');
+        $this->assertSame(200, $res->getStatusCode());
         $this->assertSame('application/json', $res->headers->get('Content-Type'));
 
         $res = $this->callApi('GET', '/api/success.json');
+        $this->assertSame(200, $res->getStatusCode());
         $this->assertSame('application/json', $res->headers->get('Content-Type'));
 
         $res = $this->callApi('GET', '/api/success.yml');
+        $this->assertSame(200, $res->getStatusCode());
         $this->assertSame('text/x-yaml; charset=UTF-8', $res->headers->get('Content-Type'));
 
         $res = $this->callApi('GET', '/api/success.xml');
+        $this->assertSame(200, $res->getStatusCode());
         $this->assertSame('application/xml', $res->headers->get('Content-Type'));
 
-        $res = $this->callApi('GET', '/api/success.jsonp&_callback=myFunc');
+        $res = $this->callApi('GET', '/api/success.jsonp?_callback=myFunc');
+        $this->assertSame(200, $res->getStatusCode());
         $this->assertSame('application/javascript', $res->headers->get('Content-Type'));
     }
 
-    //TODO: check content-type header
     public function testGetTemplate()
     {
         //expect json
         $res = $this->callApi('GET', '/api/templates/people.json');
         $this->assertSame(200, $res->getStatusCode());
+        $this->assertSame('application/json', $res->headers->get('Content-Type'));
         $this->assertTrue(0 === strpos($res->getContent(), '{"people":'));
 
         //expect html
         $res = $this->callApi('GET', '/api/templates/people.html');
+var_dump($res->getContent());
         $this->assertSame(200, $res->getStatusCode());
+        $this->assertSame('text/html; charset=UTF-8', $res->headers->get('Content-Type'));
         $this->assertTrue(0 === strpos($res->getContent(), '<!doctype html>'));
 
         //expect xhtml
         $res = $this->callApi('GET', '/api/templates/people.xhtml');
         $this->assertSame(200, $res->getStatusCode());
+        $this->assertSame('application/xhtml+xml', $res->headers->get('Content-Type'));
         $this->assertTrue(0 === strpos($res->getContent(), '<!doctype html>'));
 
         //expect csv
         $res = $this->callApi('GET', '/api/templates/people.csv');
         $this->assertSame(200, $res->getStatusCode());
+        $this->assertSame('text/csv; charset=UTF-8', $res->headers->get('Content-Type'));
         $this->assertTrue(0 === strpos($res->getContent(), 'ID, Name, Age'));
     }
 

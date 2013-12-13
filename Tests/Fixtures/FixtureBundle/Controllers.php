@@ -73,11 +73,9 @@ class Controllers extends Controller
      **/
     public function apiGetPeopleWithTemplates()
     {
-        throw new HttpException(501);
-
         return ServiceResponse::create(array('people' => $this->getPeople()), 200)
-            ->addTemplateForFormat('@FixtureBundle/Resources/people.html.twig', array('html','xhtml'))
-            ->addTemplateForFormat('@FixtureBundle/Resources/people.csv.twig', 'csv')
+            ->setTemplateForFormat('@FixtureBundle/Resources/people.html.twig', array('html','xhtml'))
+            ->setTemplateForFormat('@FixtureBundle/Resources/people.csv.twig', 'csv')
         ;
     }
 
