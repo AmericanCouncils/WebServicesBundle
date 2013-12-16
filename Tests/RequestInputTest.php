@@ -11,7 +11,6 @@ class RequestInputTest extends TestCase
 {
     public function testSimpleIncomingData()
     {
-        $this->markTestSkipped();
         $data = array(
             'age' => 27
         );
