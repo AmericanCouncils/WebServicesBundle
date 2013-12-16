@@ -332,7 +332,8 @@ class WebServiceSubscriber implements EventSubscriberInterface
         }
 
         //merge headers
-        $headers = array_merge($headers, array_merge($cfg['additional_headers'], $this->formatHeaders[$cfg['http_response_format']]));
+        $additionalHeaders = isset($cfg['additional_headers']) ? $cfg['additional_headers'] : array();
+        $headers = array_merge($headers, array_merge($additionalHeaders, $this->formatHeaders[$cfg['http_response_format']]));
 
         //set the final response
         $e->setResponse(new Response($content, $outgoingStatusCode, $headers));

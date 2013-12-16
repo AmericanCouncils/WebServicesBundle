@@ -30,6 +30,7 @@ class Person
 
     /**
      * @JMS\Type("string")
+     * @JMS\Groups({"overview"})
      **/
     protected $name;
     public function getName() { return $this->name; }

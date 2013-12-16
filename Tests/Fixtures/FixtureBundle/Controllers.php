@@ -12,6 +12,7 @@ use AC\WebServicesBundle\ServiceResponse;
 use AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\BundleException;
 use AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\Model\Person;
 use AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\Model\Group;
+use JMS\Serializer\SerializationContext;
 use JMS\Serializer\DeserializationContext;
 
 /**
@@ -74,8 +75,8 @@ class Controllers extends Controller
     public function apiGetPeopleWithTemplates()
     {
         return ServiceResponse::create(array('people' => $this->getPeople()), 200)
-            ->setTemplateForFormat('@FixtureBundle/Resources/people.html.twig', array('html','xhtml'))
-            ->setTemplateForFormat('@FixtureBundle/Resources/people.csv.twig', 'csv')
+            ->setTemplateForFormat('FixtureBundle::people.html.twig', array('html','xhtml'))
+            ->setTemplateForFormat('FixtureBundle::people.csv.twig', 'csv')
         ;
     }
 
@@ -84,21 +85,17 @@ class Controllers extends Controller
      **/
     public function apiGetSerializedPeople()
     {
-        throw new HttpException(501);
-
         return ServiceResponse::create(array('people' => $this->getPeople()));
     }
 
     /**
-     * @Route("/api/serializer/people.{_format}/context", defaults={"_format" = "json"})
+     * @Route("/api/serializer/people/context.{_format}", defaults={"_format" = "json"})
      **/
     public function apiGetSerializedPeopleWithContext()
     {
-        throw new HttpException(501);
+        $serializerContext = SerializationContext::create()->setGroups(array('overview'));
 
-        $serializerContext = SerializationContext::create()->setGroups(array('restricted'));
-
-        return ServiceResponse::create(array('people' => $this->getPeople()), 200, null, $serializerContext);
+        return ServiceResponse::create(array('people' => $this->getPeople()), 200, array(), $serializerContext);
     }
 
     /**

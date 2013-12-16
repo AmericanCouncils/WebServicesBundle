@@ -80,7 +80,6 @@ class ResponseFormatTest extends TestCase
 
         //expect html
         $res = $this->callApi('GET', '/api/templates/people.html');
-var_dump($res->getContent());
         $this->assertSame(200, $res->getStatusCode());
         $this->assertSame('text/html; charset=UTF-8', $res->headers->get('Content-Type'));
         $this->assertTrue(0 === strpos($res->getContent(), '<!doctype html>'));
@@ -104,6 +103,7 @@ var_dump($res->getContent());
         $this->assertSame(200, $res->getStatusCode());
         $data = json_decode($res->getContent(), true);
         foreach ($data['people'] as $person) {
+            $this->assertTrue(isset($person['name']));
             $this->assertTrue(isset($person['age']));
         }
 
@@ -111,6 +111,7 @@ var_dump($res->getContent());
         $this->assertSame(200, $res->getStatusCode());
         $data = json_decode($res->getContent(), true);
         foreach ($data['people'] as $person) {
+            $this->assertTrue(isset($person['name']));
             $this->assertFalse(isset($person['age']));
         }
     }

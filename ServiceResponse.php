@@ -88,7 +88,7 @@ class ServiceResponse
 
     public function getTemplateForFormat($format)
     {
-        return isset($this->templates[$format]) ?: false;
+        return isset($this->templates[$format]) ? $this->templates[$format] : false;
     }
 
     public function setTemplateForFormat($template, $formats)
