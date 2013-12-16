@@ -1,4 +1,13 @@
 parameters:
+    ac_web_services.negotiator.default_response_format_priorities: []
+    ac_web_services.negotiator.default_response_language_priorities: []
+    ac_web_services.negotiator.default_response_charset_priorities: []
+    ac_web_services.negotiator.default_input_format_types:
+        json: ['application/json']
+        yml: ['application/yaml', 'text/yaml', 'application/x-yaml', 'text/x-yaml']
+        xml: ['']
+        html: ['text/html']
+        xhtml: 
     ac_web_services.default_response_format_headers:
         json:
             'Content-Type': 'application/json'
@@ -14,7 +23,6 @@ parameters:
             'Content-Type': 'application/xhtml+xml'
 
 services:
-
     # handles API requests that match based on the app configuration
     ac_web_services.kernel_listeners:
         class: AC\WebServicesBundle\EventListener\WebServiceSubscriber
