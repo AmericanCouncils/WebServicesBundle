@@ -50,18 +50,18 @@ class WebServiceSubscriber implements EventSubscriberInterface
     protected $formatHeaders;
 
     /**
+     * Which formats the serializer should handle.
+     *
+     * @var array
+     **/
+    protected $serializableFormats;
+
+    /**
      * Map of path regex matches to API behavior configuration.
      *
      * @var array
      **/
     protected $pathConfig;
-
-    /**
-     * Initially set by matching a path, extra values injected when processing matching requests.
-     *
-     * @var array
-     **/
-    private $currentPathConfig;
 
     /**
      * Whether or not the event listeners should execute
@@ -84,11 +84,12 @@ class WebServiceSubscriber implements EventSubscriberInterface
      * @param array                    $formatHeaders
      * @param array                    $pathConfig
      */
-    public function __construct(ContainerInterface $container, $formatHeaders = array(), $pathConfig = array())
+    public function __construct(ContainerInterface $container, $formatHeaders = array(), $pathConfig = array(), $serializableFormats = array())
     {
         $this->container = $container;
         $this->formatHeaders = $formatHeaders;
         $this->pathConfig = $pathConfig;
+        $this->serializableFormats = $serializableFormats;
     }
 
     /**
@@ -128,21 +129,23 @@ class WebServiceSubscriber implements EventSubscriberInterface
 
                 //set other relevant values for this request
                 $config['suppress_response_codes'] = ($config['allow_code_suppression']) ? $request->query->get('_suppress_codes', false) : false;
-                $this->currentPathConfig = $config;
+                $config['http_response_format'] = $request->get('_format', false);
+
+                //subsequent listeners will check the request attributes for relevant configuration
+                $request->attributes->set('_ac_web_service', $config);
 
                 return;
             }
         }
 
         $this->enabled = false;
-        $this->currentPathConfig = null;
     }
 
     /**
      * Fires at the end of the `kernel.request` cycle - so listeners should receive a request that has already been
      * resolved to a controller.
      *
-     * Will throw exceptions if the response format to use for the serializer could not be resolved.
+     * Will throw exceptions if the response format is unknown.
      *
      **/
     public function onKernelLateRequest(GetResponseEvent $e)
@@ -150,10 +153,15 @@ class WebServiceSubscriber implements EventSubscriberInterface
         if (!$this->enabled) return;
 
         $req = $e->getRequest();
-        $this->currentPathConfig['http_response_format'] = $this->currentPathConfig['serializer_format'] = $this->negotiateResponseFormat($req);
-        $this->checkForJsonp($req);
+        if (!$config = $req->attributes->get('_ac_web_service', false)) {
+            return;
+        }
 
-        if (!isset($this->formatHeaders[$this->currentPathConfig['http_response_format']])) {
+        $config = $this->negotiateResponseFormat($req, $config);
+
+        $req->attributes->set('_ac_web_service', $config);
+
+        if (!isset($this->formatHeaders[$config['http_response_format']])) {
             throw new HttpException(415);
         }
 
@@ -167,7 +175,8 @@ class WebServiceSubscriber implements EventSubscriberInterface
     {
         if (!$this->enabled) return;
 
-        $cfg = $this->currentPathConfig;
+        $req = $e->getRequest();
+        $cfg = $req->attributes->get('_ac_web_service');
 
         //notify of generic API error, return early if a response gets set
         $e->getDispatcher()->dispatch(self::API_EXCEPTION, $e);
@@ -218,8 +227,9 @@ class WebServiceSubscriber implements EventSubscriberInterface
         }
 
         //serialize error content into requested format, if format is not supported by the serializer, do json
+        //TODO: consider support for exception template formats
         $format = isset($cfg['http_response_format']) ? $cfg['http_response_format'] : $cfg['default_response_format'];
-        $format = (in_array($format, array('json','xml','yml'))) ? $format : 'json';
+        $format = (in_array($format, $this->serializableFormats)) ? $format : 'json';
         $content = $this->container->get('serializer')->serialize($errorData, $format);
 
         //check for code suppression
@@ -241,9 +251,18 @@ class WebServiceSubscriber implements EventSubscriberInterface
 
         if (!$this->enabled) return;
 
+        $response = $e->getResponse();
+
         //if supression is active, always return 200 no matter what
-        if ($this->currentPathConfig['suppress_response_codes']) {
-            $response = $e->getResponse()->setStatusCode(200);
+        $config = $e->getRequest()->attributes->get('_ac_web_service');
+        if ($config['suppress_response_codes']) {
+            $response = $response->setStatusCode(200);
+        }
+
+        //if JSONP, wrap use _callback param
+        if ($config['is_jsonp']) {
+            $response->headers->set('Content-Type', $this->formatHeaders['jsonp']);
+            $response->setContent(sprintf("%s(%s);", $config['jsonp_callback'], $response->getContent()));
         }
 
         $e->getDispatcher()->dispatch(self::API_RESPONSE, $e);
@@ -258,7 +277,7 @@ class WebServiceSubscriber implements EventSubscriberInterface
 
         $request = $e->getRequest();
         $result = $e->getControllerResult();
-        $cfg = $this->currentPathConfig;
+        $cfg = $request->attributes->get('_ac_web_service');
 
         //should we handle this return at all?
         if (!$result instanceof ServiceResponse && !is_array($result) && !is_object($result)) {
@@ -268,17 +287,18 @@ class WebServiceSubscriber implements EventSubscriberInterface
         //set defaults
         $responseCode = 200;
         $headers = array();
-        $template = false;
         $data = $result;
         $serializationContext = null;
+        $template = false;
 
         //check specifically for service response
         if ($result instanceof ServiceResponse) {
             $responseCode = $result->getResponseCode();
             $headers = $result->getResponseHeaders();
             $data = $result->getResponseData();
-            $template = $result->getTemplate();
             $serializationContext = $result->getSerializationContext();
+            $template = $result->getTemplateForFormat($cfg['http_response_format']);
+            $templateKey = $result->getTemplateKey();
         }
 
         $outgoingStatusCode = $cfg['suppress_response_codes'] ? 200 : $responseCode;
@@ -293,19 +313,27 @@ class WebServiceSubscriber implements EventSubscriberInterface
 
         //render content accordingly
         if ($template) {
+            if ($templateKey) {
+                $data = array($templateKey => $data);
+            }
+
             $content = $this->container->get('templating')->render($template, $data);
-        } else {
+        }
+        //or serialize data if possible
+        else if (in_array($cfg['serializer_format'], $this->serializableFormats)) {
+
             //load serializer, encode response structure into requested format
             $content = $this->container->get('serializer')->serialize($data, $cfg['serializer_format'], $serializationContext);
+        }
 
-            //if JSONP, use _callback param
-            if ($cfg['is_jsonp']) {
-                $content = sprintf("%s(%s);", $cfg['jsonp_callback'], $content);
-            }
+        //otherwise we don't know what to do with this response data...
+        else {
+            throw new HttpException(500, 'Could not process response format ['.$cfg['http_response_format'].'].  It is not a known serialization format, and no template for the format was specified.');
         }
 
         //merge headers
-        $headers = array_merge($headers, array_merge($cfg['additional_headers'], $this->formatHeaders[$cfg['http_response_format']]));
+        $additionalHeaders = isset($cfg['additional_headers']) ? $cfg['additional_headers'] : array();
+        $headers = array_merge($headers, array_merge($additionalHeaders, $this->formatHeaders[$cfg['http_response_format']]));
 
         //set the final response
         $e->setResponse(new Response($content, $outgoingStatusCode, $headers));
@@ -321,16 +349,32 @@ class WebServiceSubscriber implements EventSubscriberInterface
         $e->getDispatcher()->dispatch(self::API_TERMINATE, $e);
     }
 
-    protected function checkForJsonp(Request $request)
+    protected function negotiateResponseFormat(Request $request, array $config)
+    {
+        $responseFormat = strtolower($request->get('_format', false));
+
+        if (!$responseFormat) {
+            //TODO: eventual robust content negotiation here, for now just check request for explicit declaration
+            //TODO: negotiate based on accept headers
+            //$responseFormat = $this->container->get('format_negotiator')->getResponseFormatForRequest($request);
+        }
+
+        $config['http_response_format'] = ($responseFormat) ? $responseFormat : $config['default_response_format'];
+        $config['serializer_format'] = in_array($config['http_response_format'], $this->serializableFormats) ? $config['http_response_format'] : false;
+
+        return $this->checkForJsonp($request, $config);
+    }
+
+    protected function checkForJsonp(Request $request, array $config)
     {
         //check for jsonp, make sure it's valid
-        if ('jsonp' === $this->currentPathConfig['http_response_format']) {
-            if (!$this->currentPathConfig['allow_jsonp']) {
+        if ('jsonp' === $config['http_response_format']) {
+            if (!$config['allow_jsonp']) {
                 throw new HttpException(415, '[jsonp] is not a supported format.');
             }
 
             //ensure jsonp callback is specified
-            if (!$this->currentPathConfig['jsonp_callback'] = $request->query->get('_callback', false)) {
+            if (!$config['jsonp_callback'] = $request->query->get('_callback', false)) {
                 throw new HttpException(400, "The [_callback] parameter is required for JSONP responses.");
             }
 
@@ -338,19 +382,13 @@ class WebServiceSubscriber implements EventSubscriberInterface
                 throw new HttpException(400, "JSONP can only be used with GET requests.");
             }
 
-            $this->currentPathConfig['serializer_format'] = 'json';
-            $this->currentPathConfig['is_jsonp'] = true;
+            $config['http_response_format'] = 'jsonp';
+            $config['serializer_format'] = 'json';
+            $config['is_jsonp'] = true;
         } else {
-            $this->currentPathConfig['is_jsonp'] = false;
+            $config['is_jsonp'] = false;
         }
-    }
 
-    protected function negotiateResponseFormat(Request $request)
-    {
-        //TODO: eventual robust content negotiation here, for now just check request for explicit declaration
-        //TODO: negotiate based on accept headers
-        $responseFormat = strtolower($request->get('_format', $this->currentPathConfig['default_response_format']));
-
-        return $responseFormat;
+        return $config;
     }
 }

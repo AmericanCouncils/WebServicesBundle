@@ -19,22 +19,23 @@ class ServiceResponse
 
     protected $responseHeaders;
 
-    protected $template;
+    protected $templates = array();
+
+    protected $templateKey = null;
 
     protected $serializationContext;
 
-    public function __construct($data, $code = 200, $headers = array(), Context $serializationContext = null, $template = null)
+    public function __construct($data, $code = 200, $headers = array(), Context $serializationContext = null)
     {
         $this->responseData = $data;
         $this->statusCode = $code;
         $this->responseHeaders = $headers;
         $this->serializationContext = $serializationContext;
-        $this->template = $template;
     }
 
-    public static function create($data, $code = 200, $headers = array(), Context $serializationContext = null, $template = null)
+    public static function create($data, $code = 200, $headers = array(), Context $serializationContext = null)
     {
-        return new static($data, $code, $headers, $serializationContext, $template);
+        return new static($data, $code, $headers, $serializationContext);
     }
 
     public function getResponseData()
@@ -85,16 +86,34 @@ class ServiceResponse
         return $this->serializationContext;
     }
 
-    public function getTemplate()
+    public function getTemplateForFormat($format)
     {
-        return $this->template;
+        return isset($this->templates[$format]) ? $this->templates[$format] : false;
     }
 
-    public function setTemplate($template)
+    public function setTemplateForFormat($template, $formats)
     {
-        $this->template = $template;
+        foreach ((array) $formats as $format) {
+            $this->templates[$format] = $template;
+        }
 
         return $this;
     }
 
+    public function hasTemplateForFormat($format)
+    {
+        return isset($this->templates[$format]);
+    }
+
+    public function setTemplateKey($key)
+    {
+        $this->templateKey = $key;
+
+        return $this;
+    }
+
+    public function getTemplateKey()
+    {
+        return $this->templateKey;
+    }
 }

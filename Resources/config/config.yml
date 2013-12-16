@@ -1,5 +1,5 @@
 parameters:
-    ac_web_services.default_format_headers:
+    ac_web_services.default_response_format_headers:
         json:
             'Content-Type': 'application/json'
         jsonp:
@@ -15,10 +15,14 @@ parameters:
 
 services:
 
-    # responsible for instantiating the API request listeners for matching paths
+    # handles API requests that match based on the app configuration
     ac_web_services.kernel_listeners:
-        class:        AC\WebServicesBundle\EventListener\WebServiceSubscriber
-        arguments:    [@service_container, %ac_web_services.response_format_headers%, %ac_web_services.path_config%]
+        class: AC\WebServicesBundle\EventListener\WebServiceSubscriber
+        arguments:
+            - @service_container
+            - %ac_web_services.response_format_headers%
+            - %ac_web_services.path_config%
+            - %ac_web_services.serializable_formats%
         tags:
             -  { name: kernel.event_listener, event: kernel.request, method: onKernelEarlyRequest, priority: 255 }
             -  { name: kernel.event_listener, event: kernel.request, method: onKernelLateRequest, priority: -255 }
