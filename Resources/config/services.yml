@@ -1,0 +1,7 @@
+services:
+
+    ac_web_services_bundle.initialized_object_constructor:
+        class: AC\WebServicesBundle\Serializer\InitializedObjectConstructor
+
+    jms_serializer.object_constructor:
+        alias: ac_web_services_bundle.initialized_object_constructor public: false

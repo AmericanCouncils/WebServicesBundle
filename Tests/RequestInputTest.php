@@ -11,6 +11,7 @@ class RequestInputTest extends TestCase
 {
     public function testSimpleIncomingData()
     {
+        $this->getContainer()->get("ac_web_services_bundle.initialized_object_constructor");
         $data = array(
             'age' => 27
         );
