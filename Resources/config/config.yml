@@ -29,6 +29,12 @@ services:
 
     ac_web_services.initialized_object_constructor:
         class: AC\WebServicesBundle\Serializer\InitializedObjectConstructor
+        arguments:
+            - @jms_serializer.unserialize_object_constructor
 
-    # jms_serializer.object_constructor:
-    #     alias: ac_web_services.initialized_object_constructor public: false
+    jms_serializer.unserialize_object_constructor:
+        class: JMS\Serializer\Construction\UnserializeObjectConstructor
+
+    jms_serializer.object_constructor:
+        alias: ac_web_services.initialized_object_constructor
+        # alias: ac_web_services.initialized_object_constructor public: false

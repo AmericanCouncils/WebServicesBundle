@@ -22,8 +22,7 @@ use JMS\Serializer\VisitorInterface;
 use JMS\Serializer\Metadata\ClassMetadata;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\Construction\ObjectConstructorInterface;
-use JMS\Serializer\Construction\DoctrineObjectConstructor;
-
+use JMS\Serializer\Construction\UnserializeObjectConstructor;
 
 /**
  * Object constructor that allows deserialization into already constructed
@@ -38,16 +37,23 @@ class InitializedObjectConstructor implements ObjectConstructorInterface
      *
      * @param ObjectConstructorInterface $fallbackConstructor Fallback object constructor
      */
-    // public function __construct(ObjectConstructorInterface $fallbackConstructor)
-    public function __construct()
+    public function __construct(ObjectConstructorInterface $fallbackConstructor = null)
     {
-        $this->fallbackConstructor = new DoctrineObjectConstructor();
+        if (is_null($fallbackConstructor)) {
+            $this->fallbackConstructor = new UnserializeObjectConstructor();
+        }
     }
 
     /**
      * {@inheritdoc}
      */
-    public function construct(VisitorInterface $visitor, ClassMetadata $metadata, $data, array $type, DeserializationContext $context)
+    public function construct(
+        VisitorInterface $visitor,
+        ClassMetadata $metadata,
+        $data,
+        array $type,
+        DeserializationContext $context
+    )
     {
         // if ($context->attributes->containsKey('target') && $context->getDepth() === 1) {
         if ($context->attributes->containsKey('target')) {

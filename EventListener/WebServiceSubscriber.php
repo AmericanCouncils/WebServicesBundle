@@ -80,9 +80,9 @@ class WebServiceSubscriber implements EventSubscriberInterface
     /**
      * Constructor.
      *
-     * @param ContainerInterface       $container
-     * @param array                    $formatHeaders
-     * @param array                    $pathConfig
+     * @param ContainerInterface $container
+     * @param array              $formatHeaders
+     * @param array              $pathConfig
      */
     public function __construct(ContainerInterface $container, $formatHeaders = array(), $pathConfig = array(), $serializableFormats = array())
     {
