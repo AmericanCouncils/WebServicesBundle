@@ -22,6 +22,8 @@ use JMS\Serializer\VisitorInterface;
 use JMS\Serializer\Metadata\ClassMetadata;
 use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\Construction\ObjectConstructorInterface;
+use JMS\Serializer\Construction\DoctrineObjectConstructor;
+
 
 /**
  * Object constructor that allows deserialization into already constructed
@@ -36,9 +38,10 @@ class InitializedObjectConstructor implements ObjectConstructorInterface
      *
      * @param ObjectConstructorInterface $fallbackConstructor Fallback object constructor
      */
-    public function __construct(ObjectConstructorInterface $fallbackConstructor)
+    // public function __construct(ObjectConstructorInterface $fallbackConstructor)
+    public function __construct()
     {
-        $this->fallbackConstructor = $fallbackConstructor;
+        $this->fallbackConstructor = new DoctrineObjectConstructor();
     }
 
     /**

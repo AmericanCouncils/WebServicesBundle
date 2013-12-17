@@ -26,3 +26,9 @@ services:
         tags:
             -  { name: kernel.event_listener, event: kernel.request, method: onKernelEarlyRequest, priority: 255 }
             -  { name: kernel.event_listener, event: kernel.request, method: onKernelLateRequest, priority: -255 }
+
+    ac_web_services.initialized_object_constructor:
+        class: AC\WebServicesBundle\Serializer\InitializedObjectConstructor
+
+    # jms_serializer.object_constructor:
+    #     alias: ac_web_services.initialized_object_constructor public: false

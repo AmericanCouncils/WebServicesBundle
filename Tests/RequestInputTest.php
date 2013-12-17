@@ -5,13 +5,13 @@ namespace AC\WebServicesBundle\Tests;
 use AC\WebServicesBundle\TestCase;
 
 /**
- * These tests check various response formats are returned as expected.
+ * These tests check various response formats are returned as expected.li
  **/
 class RequestInputTest extends TestCase
 {
     public function testSimpleIncomingData()
     {
-        $this->getContainer()->get("ac_web_services_bundle.initialized_object_constructor");
+        var_dump($this->getContainer()->get("ac_web_services.initialized_object_constructor"));
         $data = array(
             'age' => 27
         );
