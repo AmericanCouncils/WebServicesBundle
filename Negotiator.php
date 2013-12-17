@@ -15,12 +15,17 @@ class Negotiator
     private $formatPriorities;
     private $charsetPriorities;
 
-    public function __construct($inputFormatMap = array(), $langPriorities = array(), $formatPriorities = array(), $charsetPriorities = array())
+    public function __construct($inputFormatMap = array(), $formatPriorities = array(), $langPriorities = array(), $charsetPriorities = array())
     {
         $this->inputFormatMap = $inputFormatMap;
         $this->langPriorities = $langPriorities;
         $this->formatPriorities = $formatPriorities;
         $this->charsetPriorities = $charsetPriorities;
+    }
+
+    public static function create($map = array(), $formats = array(), $langs = array(), $charsets = array())
+    {
+        return new Negotiator($map, $formats, $langs, $charsets);
     }
 
     public function negotiateRequestFormat(Request $req)
@@ -47,7 +52,7 @@ class Negotiator
 
     public function setInputFormatForType($format, $type)
     {
-        $this->inputFormatMap[$type] = $format;
+        $this->inputFormatMap[$format] = $type;
 
         return $this;
     }

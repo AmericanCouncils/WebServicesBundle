@@ -1,0 +1,23 @@
+# these are the defaults used internally by the Configuration class when processing
+default_response_format: 'json'
+serializable_formats: ['json','xml','yml']
+response_format_priorities: ['json','xml','yml','html']
+response_language_priorities: ['en']
+response_charset_priorities: ['UTF-8']
+input_format_types:
+    json: ['application/json']
+    yml: ['application/yaml', 'text/yaml', 'application/x-yaml', 'text/x-yaml']
+    xml: ['application/xml']
+response_format_headers:
+    json:
+        'Content-Type': 'application/json'
+    jsonp:
+        'Content-Type': 'application/javascript'
+    yml:
+        'Content-Type': 'application/yaml'
+    xml:
+        'Content-Type': 'application/xml'
+    html:
+        'Content-Type': 'text/html; charset=UTF-8'
+    xhtml:
+        'Content-Type': 'application/xhtml+xml'

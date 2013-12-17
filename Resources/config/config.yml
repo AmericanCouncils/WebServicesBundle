@@ -1,27 +1,3 @@
-parameters:
-    ac_web_services.negotiator.default_response_format_priorities: []
-    ac_web_services.negotiator.default_response_language_priorities: []
-    ac_web_services.negotiator.default_response_charset_priorities: []
-    ac_web_services.negotiator.default_input_format_types:
-        json: ['application/json']
-        yml: ['application/yaml', 'text/yaml', 'application/x-yaml', 'text/x-yaml']
-        xml: ['']
-        html: ['text/html']
-        xhtml: 
-    ac_web_services.default_response_format_headers:
-        json:
-            'Content-Type': 'application/json'
-        jsonp:
-            'Content-Type': 'application/javascript'
-        yml:
-            'Content-Type': 'application/yaml'
-        xml:
-            'Content-Type': 'application/xml'
-        html:
-            'Content-Type': 'text/html; charset=UTF-8'
-        xhtml:
-            'Content-Type': 'application/xhtml+xml'
-
 services:
     # handles API requests that match based on the app configuration
     ac_web_services.kernel_listeners:
@@ -35,6 +11,7 @@ services:
             -  { name: kernel.event_listener, event: kernel.request, method: onKernelEarlyRequest, priority: 255 }
             -  { name: kernel.event_listener, event: kernel.request, method: onKernelLateRequest, priority: -255 }
 
+    #TODO: consider moving into optional config file
     ac_web_services.initialized_object_constructor:
         class: AC\WebServicesBundle\Serializer\InitializedObjectConstructor
         arguments:
@@ -46,3 +23,12 @@ services:
     jms_serializer.object_constructor:
         alias: ac_web_services.initialized_object_constructor
         # alias: ac_web_services.initialized_object_constructor public: false
+
+    #TODO: consider moving into optional config file
+    ac_web_services.negotiator:
+        class: AC\WebServicesBundle\Negotiator
+        arguments:
+            - %ac_web_services.negotiation.input_format_types%
+            - %ac_web_services.negotiation.response_format_priorities%
+            - %ac_web_services.negotiation.response_language_priorities%
+            - %ac_web_services.negotiation.response_charset_priorities%
