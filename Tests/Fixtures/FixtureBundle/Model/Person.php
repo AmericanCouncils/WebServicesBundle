@@ -43,8 +43,10 @@ class Person
 
     /**
      * @JMS\Type("AC\WebservicesBundle\Tests\Fixtures\FixtureBundle\Model\Person")
+     * @JMS\SerializedName("bestFriend")
      **/
     protected $bestFriend;
+    public function setBestFriend($bestFriend) {$this->bestFriend = $bestFriend;}
 
     /**
      * @JMS\Type("array<AC\WebservicesBundle\Tests\Fixtures\FixtureBundle\Model\Person>")

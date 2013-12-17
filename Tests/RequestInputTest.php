@@ -9,6 +9,7 @@ use AC\WebServicesBundle\TestCase;
  **/
 class RequestInputTest extends TestCase
 {
+
     public function testSimpleIncomingData()
     {
         // $this->markTestSkipped();
