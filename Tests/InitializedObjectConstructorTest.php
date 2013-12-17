@@ -22,7 +22,7 @@ class InitializedObjectConstructorTest extends TestCase
         $this->edgar = new Person("Edgar", 11, 5);
 
     }
-        
+
     public function testConstruct()
     {
         $existingPerson = new Person('John', 86);
@@ -46,21 +46,20 @@ class InitializedObjectConstructorTest extends TestCase
     {
         $this->allen->setBestFriend($this->barry);
         $this->context->setAttribute('target', $this->allen);
+        $davisData = $this->serializer->serialize($this->davis,"json");
         $newData = array(
             // 'age' => 108,
-            'bestFriend' => $this->serializer->serialize($this->davis,
-                "json"
-            )
+            'bestFriend' => json_decode($davisData, TRUE)
         );
+        // var_dump($newData);
         $modifiedPerson = $this->serializer->deserialize(
             json_encode($newData),
             'AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\Model\Person',
             'json',
             $this->context
         );
+        var_dump($modifiedPerson);
         $encoded = json_decode($this->serializer->serialize($modifiedPerson, "json"));
-        // var_dump($modifiedPerson);
-        var_dump($encoded);
         $this->assertSame('Davis', $encoded->bestFriend->name);
 
     }
