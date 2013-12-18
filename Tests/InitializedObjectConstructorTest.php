@@ -69,7 +69,7 @@ class InitializedObjectConstructorTest extends TestCase
 
     public function testMultipleUpdate()
     {
-        //$this->markTestSkipped();
+        $this->markTestSkipped();
         $this->allen->setOtherFriends(array($this->barry, $this->clive));
         $this->barry->setBestFriend($this->edgar);
         $this->context->setAttribute('target', $this->allen);
@@ -111,5 +111,37 @@ class InitializedObjectConstructorTest extends TestCase
     {
         $this->allen->setBestFriend($this->barry);
         $this->barry->setBestFriend($this->clive);
+    }
+
+    public function testComplexStructure()
+    {
+        // $this->markTestSkipped();
+        $this->context->setAttribute('target', $this->allen);
+        $this->context->setAttribute('updateNestedData', TRUE);
+        $this->context->setAttribute('targetStack', new \SplStack());
+        $this->context->attributes->get('targetStack')->get()->push($this->allen);
+        var_dump($this->context->attributes->get('targetStack')->get());
+
+        $newData = array(
+            'bestFriend' => array(
+                'name' => "Alyosha",
+                'age' => 10,
+                'bestFriend' => array(
+                    'name' => "Boris",
+                    'age' => 11,
+                    'bestFriend' => array(
+                        'name' => 'Dimitri',
+                        'age' => 12
+                    )
+                )
+            )
+        );
+        $modifiedPerson = $this->serializer->deserialize(
+            json_encode($newData),
+            'AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\Model\Person',
+            'json',
+            $this->context
+        );
+
     }
 }

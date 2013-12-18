@@ -44,6 +44,42 @@ class InitializedObjectConstructor implements ObjectConstructorInterface
         }
     }
 
+    // protected function pushTargetStack($context)
+    // {
+
+    // }
+
+    // protected function popTargetStack($context)
+    // {
+
+    // }
+
+    protected function updatetargetStack($context)
+    {
+        $lastDepth = $context->attributes->get('lastDepth')->get();
+        $currentDepth = $context->getDepth();
+        $targetStack = $context->attritbutes->get('targetStack')->get();
+        if ($lastDepth > $currentDepth) {
+            // we have moved up the graph, pop the stack
+            // $targetStack->pop();
+            $this->doNothing();
+
+        } elseif ($lastDepth < $currentDepth) {
+            // we have moved down the graph, push the stack
+            $this->doNothing();
+            // $targetStack->push(
+                // How do I know what the new thing is?
+            // );
+        } elseif ($lastDepth === $currentDepth) {
+            $this->doNothing();
+            // we have moved along the graph. Should this be possible?
+        } else {
+            $this->doNothing();
+            // something else has happened. This is probably an error.
+        }
+
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -55,27 +91,82 @@ class InitializedObjectConstructor implements ObjectConstructorInterface
         DeserializationContext $context
     )
     {
+        $updateNestedData = FALSE;
+        if($context->attributes->containsKey('updateNestedData')) {
+            $updateNestedData = $context->attributes->get('updateNestedData')->get();
+        }
+
+
+        if($context->getDepth() == 1 && $context->attributes->containsKey('target')) {
+            $context->setAttribute('targetStack', new \SplStack());
+            $target = $context->attributes->get('target')->get();
+            $context->attributes->get('targetStack')->get()->push($target);
+            return $target;
+        }
+
+        if ($context->getDepth() > 1 && $updateNestedData === TRUE) {
+            $stack = $context->getMetadataStack();
+            $propertyMetadata = $stack[count($stack) - 2];
+
+
+            print_r("\n" . '===' . "\n" . "Depth: " . $context->getDepth());
+
+            print("\n");
+            print_r("Class: ");
+            print_r($propertyMetadata->class);
+
+            print("\n");
+            print_r("SerializedName: ");
+            print_r($propertyMetadata->serializedName);
+
+            print("\n");
+            print_r("Data: ");
+            print_r($data);
+        }
+
+        // if ($context->attributes->containsKey('target') && $context->getDepth() === 1) {
+        // if ($context->attributes->containsKey('target')) {
+        //     return $context->attributes->get('target')->get();
+        // }
+
+        return $this->fallbackConstructor->construct($visitor, $metadata, $data, $type, $context);
+    }
+
+    private function doNothing()
+    {
+        True;
+    }
+}
+
+
         //var_dump($data);
         //var_dump($type);
         //var_dump($context->getDepth());
         // var_dump($metadata);
         //var_dump('DEPTH: '. $context->getDepth().' - Meta: '.print_r($metadata, true). ' - DATA: '. print_r($data, true));
-///*
-        if ($context->getDepth() !== 1) {
-            $stack = $context->getMetadataStack();
 
-            var_dump($data);
-            var_dump("WTF!?");
-            print_r($stack[count($stack) - 2]);
-            exit('PWN3D');
-        }
-//*/
-        // if ($context->attributes->containsKey('target') && $context->getDepth() === 1) {
-        if ($context->attributes->containsKey('target')) {
-            return $context->attributes->get('target')->get();
-        }
+        // if ($context->getDepth() !== 1) {
+        //     $stack = $context->getMetadataStack();
 
-        return $this->fallbackConstructor->construct($visitor, $metadata, $data, $type, $context);
-    }
+        //     var_dump($data);
+        //     var_dump("WTF!?");
+            // print_r($stack[count($stack) - 2]);
+        //     exit('PWN3D');
+        // }
 
-}
+
+            // print("\n");
+            // print_r("TargetStack: ");
+            // print_r($targetStack);
+        // if($context->getDepth() === 3) {
+        //     throw new \Exception("Get that stack!", 1);
+
+        // }
+
+            // print("\n");
+            // print_r("PropertyMetadata: ");
+            // print_r($propertyMetadata);
+
+            // print("\n");
+            // print_r("Type: ");
+            // print_r($propertyMetadata->type);
