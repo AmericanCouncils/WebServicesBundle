@@ -98,7 +98,7 @@ class InitializedObjectConstructor implements ObjectConstructorInterface
 
 
         if($context->getDepth() == 1 && $context->attributes->containsKey('target')) {
-            $context->setAttribute('targetStack', new \SplStack());
+            $context->attributes->set('targetStack', new \SplStack());
             $target = $context->attributes->get('target')->get();
             $context->attributes->get('targetStack')->get()->push($target);
             return $target;
@@ -107,6 +107,10 @@ class InitializedObjectConstructor implements ObjectConstructorInterface
         if ($context->getDepth() > 1 && $updateNestedData === TRUE) {
             $stack = $context->getMetadataStack();
             $propertyMetadata = $stack[count($stack) - 2];
+            $targetStack = $context->attributes->get('targetStack')->get();
+            $serializedName = $propertyMetadata->serializedName;
+            $target = $targetStack[count($targetStack) - 1]->$serializedName;
+            print_r($target);
 
 
             print_r("\n" . '===' . "\n" . "Depth: " . $context->getDepth());

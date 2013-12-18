@@ -118,9 +118,7 @@ class InitializedObjectConstructorTest extends TestCase
         // $this->markTestSkipped();
         $this->context->setAttribute('target', $this->allen);
         $this->context->setAttribute('updateNestedData', TRUE);
-        $this->context->setAttribute('targetStack', new \SplStack());
-        $this->context->attributes->get('targetStack')->get()->push($this->allen);
-        var_dump($this->context->attributes->get('targetStack')->get());
+        // print_r($this->context);
 
         $newData = array(
             'bestFriend' => array(
