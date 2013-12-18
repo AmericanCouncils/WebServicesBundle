@@ -50,8 +50,10 @@ class Person
 
     /**
      * @JMS\Type("array<AC\WebservicesBundle\Tests\Fixtures\FixtureBundle\Model\Person>")
+     * @JMS\SerializedName("otherFriends")
      **/
     protected $otherFriends;
+    public function setOtherFriends($otherFriends) {$this->otherFriends = $otherFriends;}
 
     /**
      * @JMS\Type("array<AC\WebservicesBundle\Tests\Fixtures\FixtureBundle\Model\Groups>")

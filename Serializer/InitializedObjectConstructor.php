@@ -55,6 +55,21 @@ class InitializedObjectConstructor implements ObjectConstructorInterface
         DeserializationContext $context
     )
     {
+        //var_dump($data);
+        //var_dump($type);
+        //var_dump($context->getDepth());
+        // var_dump($metadata);
+        //var_dump('DEPTH: '. $context->getDepth().' - Meta: '.print_r($metadata, true). ' - DATA: '. print_r($data, true));
+///*
+        if ($context->getDepth() !== 1) {
+            $stack = $context->getMetadataStack();
+
+            var_dump($data);
+            var_dump("WTF!?");
+            print_r($stack[count($stack) - 2]);
+            exit('PWN3D');
+        }
+//*/
         // if ($context->attributes->containsKey('target') && $context->getDepth() === 1) {
         if ($context->attributes->containsKey('target')) {
             return $context->attributes->get('target')->get();
