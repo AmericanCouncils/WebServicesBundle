@@ -2,7 +2,7 @@
 
 namespace AC\WebServicesBundle;
 
-use Negotiation\Negotiator;
+use Negotiation\Negotiator as BasicNegotiator;
 use Negotiation\FormatNegotiator;
 use Negotiation\LanguageNegotiator;
 use Symfony\Component\HttpFoundation\Request;
@@ -106,7 +106,7 @@ class Negotiator
     public function getBasicNegotiator()
     {
         if (!$this->basicNegotiator) {
-            $this->basicNegotiator = new Negotiator();
+            $this->basicNegotiator = new BasicNegotiator();
         }
 
         return $this->basicNegotiator;
