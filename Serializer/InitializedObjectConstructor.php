@@ -39,46 +39,14 @@ class InitializedObjectConstructor implements ObjectConstructorInterface
      */
     public function __construct(ObjectConstructorInterface $fallbackConstructor = null)
     {
-        if (is_null($fallbackConstructor)) {
-            $this->fallbackConstructor = new UnserializeObjectConstructor();
-        }
-    }
-
-    // protected function pushTargetStack($context)
-    // {
-
-    // }
-
-    // protected function popTargetStack($context)
-    // {
-
-    // }
-
-    protected function updatetargetStack($context)
-    {
-        $lastDepth = $context->attributes->get('lastDepth')->get();
-        $currentDepth = $context->getDepth();
-        $targetStack = $context->attritbutes->get('targetStack')->get();
-        if ($lastDepth > $currentDepth) {
-            // we have moved up the graph, pop the stack
-            // $targetStack->pop();
-            $this->doNothing();
-
-        } elseif ($lastDepth < $currentDepth) {
-            // we have moved down the graph, push the stack
-            $this->doNothing();
-            // $targetStack->push(
-                // How do I know what the new thing is?
-            // );
-        } elseif ($lastDepth === $currentDepth) {
-            $this->doNothing();
-            // we have moved along the graph. Should this be possible?
-        } else {
-            $this->doNothing();
-            // something else has happened. This is probably an error.
+        if (!$fallbackConstructor) {
+            $fallbackConstructor = new UnserializeObjectConstructor();
         }
 
+        $this->fallbackConstructor = $fallbackConstructor;
     }
+
+
 
     /**
      * {@inheritdoc}
@@ -92,46 +60,66 @@ class InitializedObjectConstructor implements ObjectConstructorInterface
     )
     {
         $updateNestedData = FALSE;
+
+        // check if we have gone back up, pop the stack if so
+        if($context->attributes->containsKey("targetStack")) {
+            $targetStack = $context->attributes->get('targetStack')->get();
+            $lastDepth = $targetStack->top()['depth'];
+            $currentDepth = $context->getDepth();
+            if($currentDepth < $lastDepth) {
+                $targetStack->pop();
+            }
+
+        }
+
         if($context->attributes->containsKey('updateNestedData')) {
             $updateNestedData = $context->attributes->get('updateNestedData')->get();
         }
 
+        $metaDataStack = $context->getMetadataStack();
 
         if($context->getDepth() == 1 && $context->attributes->containsKey('target')) {
-            $context->attributes->set('targetStack', new \SplStack());
-            $target = $context->attributes->get('target')->get();
-            $context->attributes->get('targetStack')->get()->push($target);
-            return $target;
+
+
+            if(!$context->attributes->containsKey("targetStack")) {
+                $context->attributes->set('targetStack', new \SplStack());
+            }
+
+            $target = array();
+            $target["classMetadata"] = $metaDataStack[0];
+            $target["depth"] = 1;
+            $target["object"] = $context->attributes->get('target')->get();
+
+            $targetStack = $context->attributes->get('targetStack')->get();
+
+            $targetStack->push($target);
+            return $target['object'];
         }
 
         if ($context->getDepth() > 1 && $updateNestedData === TRUE) {
-            $stack = $context->getMetadataStack();
-            $propertyMetadata = $stack[count($stack) - 2];
+            $propertyMetadata = $metaDataStack[count($metaDataStack) - 2];
             $targetStack = $context->attributes->get('targetStack')->get();
-            $serializedName = $propertyMetadata->serializedName;
-            $target = $targetStack[count($targetStack) - 1]->$serializedName;
-            print_r($target);
 
+            $instance = $propertyMetadata->reflection->getValue($targetStack->top()['object']);
+
+            if(is_null($instance)) {
+                return $this->fallbackConstructor->construct($visitor, $metadata, $data, $type, $context);
+            }
+
+            $target = array();
+            $target["classMetadata"] = $metaDataStack->top();
+            $target["depth"] = $context->getDepth();
+            $target["object"] = $instance;
+
+            $targetStack->push($target);
 
             print_r("\n" . '===' . "\n" . "Depth: " . $context->getDepth());
-
             print("\n");
-            print_r("Class: ");
-            print_r($propertyMetadata->class);
+            print_r("targetStack top object: ");
+            print_r($targetStack->top()['object']);
 
-            print("\n");
-            print_r("SerializedName: ");
-            print_r($propertyMetadata->serializedName);
-
-            print("\n");
-            print_r("Data: ");
-            print_r($data);
+            return $target['object'];
         }
-
-        // if ($context->attributes->containsKey('target') && $context->getDepth() === 1) {
-        // if ($context->attributes->containsKey('target')) {
-        //     return $context->attributes->get('target')->get();
-        // }
 
         return $this->fallbackConstructor->construct($visitor, $metadata, $data, $type, $context);
     }
@@ -141,36 +129,84 @@ class InitializedObjectConstructor implements ObjectConstructorInterface
         True;
     }
 }
+            // $serializedName = $propertyMetadata->serializedName;
+            // $targetName = $propertyMetadata->reflection->name;
+            // $targetParent = $targetStack[count($targetStack) - 1];
 
 
-        //var_dump($data);
-        //var_dump($type);
-        //var_dump($context->getDepth());
-        // var_dump($metadata);
-        //var_dump('DEPTH: '. $context->getDepth().' - Meta: '.print_r($metadata, true). ' - DATA: '. print_r($data, true));
 
-        // if ($context->getDepth() !== 1) {
-        //     $stack = $context->getMetadataStack();
+    // protected function updateTargetStack($target)
+    // {
+    //     return null;
+    //     // $lastDepth = $context->attributes->get('lastDepth')->get();
+    //     // $currentDepth = $context->getDepth();
+    //     // $targetStack = $context->attritbutes->get('targetStack')->get();
+    //     // if ($lastDepth > $currentDepth) {
+    //     //     // we have moved up the graph, pop the stack
+    //     //     // $targetStack->pop();
+    //     //     $this->doNothing();
 
-        //     var_dump($data);
-        //     var_dump("WTF!?");
-            // print_r($stack[count($stack) - 2]);
-        //     exit('PWN3D');
-        // }
+    //     // } elseif ($lastDepth < $currentDepth) {
+    //     //     // we have moved down the graph, push the stack
+    //     //     $this->doNothing();
+    //     //     // $targetStack->push(
+    //     //         // How do I know what the new thing is?
+    //     //     // );
+    //     // } elseif ($lastDepth === $currentDepth) {
+    //     //     $this->doNothing();
+    //     //     // we have moved along the graph. Should this be possible?
+    //     // } else {
+    //     //     $this->doNothing();
+    //     //     // something else has happened. This is probably an error.
+    //     // }
+
+    // }
 
 
-            // print("\n");
-            // print_r("TargetStack: ");
+            // var_dump($value);
+            // // print_r($targetStack->top()['object']);
+
+            // $targetObjectName = $propertyMetadata->reflection->name;
+            // print_r($targetObjectName);
+
+
+
+            // $parentProperties = $targetStack[0]['classMetadata']->reflection->getProperties();
+            // print_r($parentProperties[3]->setValue('something'));
+
+
+
+            // $target["object"] = $this->getTargetObject($targetStack);
+
+            // return $this->updateTargetStack($target);
+
             // print_r($targetStack);
-        // if($context->getDepth() === 3) {
-        //     throw new \Exception("Get that stack!", 1);
+            // $target = $targetParent->$targetName;
+            // $target = $targetParent->
 
+            // $target = $context->attributes->get('target')->get();
+            // $target = $targetStack[count($targetStack) - 1]->$serializedName;
+            // print_r($target);
+            // print("\n");
+            // print_r("targetName: ");
+            // print_r($targetName);
+
+            // print("\n");
+            // print_r("targetParent: ");
+            // print_r($targetParent);
+
+            // print("\n");
+            // print_r("Class: ");
+            // print_r($propertyMetadata->class);
+
+            // print("\n");
+            // print_r("SerializedName: ");
+            // print_r($propertyMetadata->serializedName);
+
+            // print("\n");
+            // print_r("Data: ");
+            // print_r($data);
+        // if ($context->attributes->containsKey('target') && $context->getDepth() === 1) {
+        // if ($context->attributes->containsKey('target')) {
+        //     return $context->attributes->get('target')->get();
         // }
-
-            // print("\n");
-            // print_r("PropertyMetadata: ");
-            // print_r($propertyMetadata);
-
-            // print("\n");
-            // print_r("Type: ");
-            // print_r($propertyMetadata->type);

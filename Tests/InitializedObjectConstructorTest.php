@@ -73,6 +73,7 @@ class InitializedObjectConstructorTest extends TestCase
         $this->allen->setOtherFriends(array($this->barry, $this->clive));
         $this->barry->setBestFriend($this->edgar);
         $this->context->setAttribute('target', $this->allen);
+        $this->context->setAttribute('updateNestedData', TRUE);
         $newData = array(
             'name' => 'Bazil',
             'otherFriends' => array(
@@ -117,8 +118,8 @@ class InitializedObjectConstructorTest extends TestCase
     {
         // $this->markTestSkipped();
         $this->context->setAttribute('target', $this->allen);
+        $this->allen->setBestFriend($this->edgar);
         $this->context->setAttribute('updateNestedData', TRUE);
-        // print_r($this->context);
 
         $newData = array(
             'bestFriend' => array(
