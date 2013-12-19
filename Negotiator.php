@@ -2,6 +2,7 @@
 
 namespace AC\WebServicesBundle;
 
+use Negotiation\Negotiator;
 use Negotiation\FormatNegotiator;
 use Negotiation\LanguageNegotiator;
 use Symfony\Component\HttpFoundation\Request;
@@ -14,6 +15,7 @@ class Negotiator
     private $langPriorities;
     private $formatPriorities;
     private $charsetPriorities;
+    private $basicNegotiator;
 
     public function __construct($inputFormatMap = array(), $formatPriorities = array(), $langPriorities = array(), $charsetPriorities = array())
     {
@@ -42,12 +44,17 @@ class Negotiator
 
     public function negotiateResponseLanguage(Request $req)
     {
-        throw new \RuntimeException('Not implemented.');
+        return $this->getLanguageNegotiator()->getBest($req->headers->get('Accept-Language'), $this->langPriorities)->getValue();
     }
 
     public function negotiateResponseCharset(Request $req)
     {
         throw new \RuntimeException('Not implemented.');
+    }
+
+    public function negotiateResponseEncoding(Request $req)
+    {
+
     }
 
     public function setInputFormatForType($format, $type)
@@ -78,7 +85,7 @@ class Negotiator
         return $this;
     }
 
-    protected function getLanguageNegotiator()
+    public function getLanguageNegotiator()
     {
         if (!$this->langNegotiator) {
             $this->langNegotiator = new LanguageNegotiator();
@@ -87,12 +94,22 @@ class Negotiator
         return $this->langNegotiator;
     }
 
-    protected function getFormatNegotiator()
+    public function getFormatNegotiator()
     {
         if (!$this->formatNegotiator) {
             $this->formatNegotiator = new FormatNegotiator();
         }
 
         return $this->formatNegotiator;
+    }
+
+    public function getBasicNegotiator()
+    {
+        if (!$this->basicNegotiator) {
+            $this->basicNegotiator = new Negotiator();
+        }
+
+        return $this->basicNegotiator;
+
     }
 }

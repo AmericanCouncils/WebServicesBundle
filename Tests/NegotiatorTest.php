@@ -9,11 +9,6 @@ use AC\WebServicesBundle\TestCase;
 
 class ApiNegotiationTest extends TestCase
 {
-    public function testExample()
-    {
-        $this->getContainer();
-    }
-
     public function testNegotiateRequestFormat()
     {
         $negotiator = new Negotiator(array(
@@ -43,23 +38,36 @@ class ApiNegotiationTest extends TestCase
 
     public function testNegotiateResponseFormat()
     {
-        $negotiator = Negotiator::create()->setFormatPriorities(array('json','xml','yml','html'));
+        $negotiator = Negotiator::create();
         $req = Request::create('GET', '/foo');
 
-        //accept yaml header first priority
+        //expect html based no priority
+        $negotiator->setFormatPriorities(array('json','xml','yml','html'));
+        $req->headers->set('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8');
+        $this->assertSame('html', $negotiator->negotiateResponseFormat($req));
 
-        //accept xml header highest priority
+        //expect json
+        $negotiator->setFormatPriorities(array('json','xml','yml'));
+        $req->headers->set('Accept', 'application/xhtml+xml,application/json,application/xml;q=0.9,*/*;q=0.8');
+        $this->assertSame('json', $negotiator->negotiateResponseFormat($req));
 
-        //accept html header highest priority
+        //accept xml header first priority
+        $negotiator->setFormatPriorities(array('xml','json','yml'));
+        $req->headers->set('Accept', 'application/xhtml+xml,application/json;q=0.6,application/xml;q=0.9,*/*;q=0.8');
+        $this->assertSame('xml', $negotiator->negotiateResponseFormat($req));
     }
 
     public function testNegotiateResponseLanguage()
     {
-        
+        $negotiator = Negotiator::create()->setLanguagePriorities(array('en','da','fr','ar'));
+        $req = Request::create('GET', '/foo');
+        $req->headers->set('Accept-Language', 'da, en-gb;q=0.8, en;q=0.7');
+
+        $this->assertSame('da', $negotiator->negotiateResponseLanguage($req));
     }
 
     public function testNegotiateResponseCharset()
     {
-        
+
     }
 }
