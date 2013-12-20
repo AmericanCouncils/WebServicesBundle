@@ -4,6 +4,7 @@ namespace AC\WebServicesBundle\Tests;
 
 use AC\WebServicesBundle\TestCase;
 use AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\Model\Person;
+use AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\Model\Group;
 use JMS\Serializer\DeserializationContext;
 // use AC\WebServicesBundle\Serializer\DeserializationContext;
 
@@ -169,11 +170,72 @@ class InitializedObjectConstructorTest extends TestCase
             'json',
             $this->context
         );
-        var_dump($modifiedPerson);
     }
 // test best friend and other friends
 // work in group somehow
 // use both classes, one containing array
+
+    public function testComplexMixedGroups()
+    {
+        // set up groups - alphas will change, betas should not
+
+        $alphas = new Group();
+        $alphas->setOwner($this->allen);
+        $alphas->setMembers(array(
+               $this->allen,
+               $this->barry,
+               $this->clive
+            )
+        );
+        $betas = new Group();
+        $betas->setOwner($this->clive);
+        $betas->setMembers(array(
+               $this->barry,
+               $this->clive,
+               $this->davis
+            )
+        );
+
+        // set up relationships (should survive unchanged)
+        $this->allen->setBestFriend($this->barry);
+        $this->barry->setBestFriend($this->clive);
+        $this->clive->setBestFriend($this->davis);
+        $this->davis->setBestFriend($this->edgar);
+        $this->edgar->setBestFriend($this->allen);
+        $this->allen->setOtherFriends(array($this->clive, $this->davis));
+        $this->barry->setOtherFriends(array($this->davis, $this->allen));
+        $this->clive->setOtherFriends(array($this->edgar, $this->allen));
+        $this->davis->setOtherFriends(array($this->allen, $this->barry, $this->clive));
+        $this->davis->setOtherFriends(array($this->barry));
+
+
+        $newData = array(
+            'owner' => $this->edgar,
+            'members' => array(
+                $this->clive,
+                $this->davis,
+                $this->edgar
+            )
+        );
+
+        $this->context->setAttribute('target', $alphas);
+        $this->context->setAttribute('updateNestedData', TRUE);
+        $modifiedGroup = $this->serializer->deserialize(
+            $serializedData,
+            'AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\Model\Person',
+            'json',
+            $this->context
+        );
+        var_dump($modifiedGroup);
+
+
+
+    $this->assertEquals("Edgar", $alphas->getOwner()->getName());
+    $this->assertEquals($alphaMemberNames, array("Clive", "Davis", "Edgar"));
+    $this->assertEquals("Allen", $this->edgar->getBestFriend()->getName());
+
+    }
+
     public function testComplexStructure()
     {
         $this->markTestSkipped();
