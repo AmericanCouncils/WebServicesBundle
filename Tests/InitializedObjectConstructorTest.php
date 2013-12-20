@@ -217,6 +217,7 @@ class InitializedObjectConstructorTest extends TestCase
                 $this->edgar
             )
         );
+        $serializedData = $this->serializer->serialize($newData, "json");
 
         $this->context->setAttribute('target', $alphas);
         $this->context->setAttribute('updateNestedData', TRUE);
@@ -226,13 +227,17 @@ class InitializedObjectConstructorTest extends TestCase
             'json',
             $this->context
         );
-        var_dump($modifiedGroup);
+        // var_dump($modifiedGroup);
 
-
-
-    $this->assertEquals("Edgar", $alphas->getOwner()->getName());
-    $this->assertEquals($alphaMemberNames, array("Clive", "Davis", "Edgar"));
-    $this->assertEquals("Allen", $this->edgar->getBestFriend()->getName());
+        var_dump($modifiedGroup->getOwner());
+        $this->assertEquals("Edgar", $modifiedGroup->getOwner()->getName());
+        $alphaMemberNames = array();
+        foreach ($modifiedGroup->getMembers() as $member) {
+            $alphaMemberNames[] = $member->getName();
+        }
+        $this->assertEquals($alphaMemberNames, array("Clive", "Davis", "Edgar"));
+        $this->assertEquals("Allen", $this->edgar->getBestFriend()->getName());
+        $this->assertEquals("Barry", $this->allen->getBestFriend()->getName());
 
     }
 
