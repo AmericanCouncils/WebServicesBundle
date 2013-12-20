@@ -46,8 +46,6 @@ class InitializedObjectConstructor implements ObjectConstructorInterface
         $this->fallbackConstructor = $fallbackConstructor;
     }
 
-
-
     /**
      * {@inheritdoc}
      */
@@ -62,26 +60,25 @@ class InitializedObjectConstructor implements ObjectConstructorInterface
         $updateNestedData = FALSE;
 
         // check if we have gone back up, pop the stack if so
-        if($context->attributes->containsKey("targetStack")) {
+        if ($context->attributes->containsKey("targetStack")) {
             $targetStack = $context->attributes->get('targetStack')->get();
             $lastDepth = $targetStack->top()['depth'];
             $currentDepth = $context->getDepth();
-            if($currentDepth < $lastDepth) {
+            if ($currentDepth < $lastDepth) {
                 $targetStack->pop();
             }
 
         }
 
-        if($context->attributes->containsKey('updateNestedData')) {
+        if ($context->attributes->containsKey('updateNestedData')) {
             $updateNestedData = $context->attributes->get('updateNestedData')->get();
         }
 
         $metaDataStack = $context->getMetadataStack();
 
-        if($context->getDepth() == 1 && $context->attributes->containsKey('target')) {
+        if ($context->getDepth() == 1 && $context->attributes->containsKey('target')) {
 
-
-            if(!$context->attributes->containsKey("targetStack")) {
+            if (!$context->attributes->containsKey("targetStack")) {
                 $context->attributes->set('targetStack', new \SplStack());
             }
 
@@ -93,6 +90,11 @@ class InitializedObjectConstructor implements ObjectConstructorInterface
             $targetStack = $context->attributes->get('targetStack')->get();
 
             $targetStack->push($target);
+
+            // print_r("\n" . '===' . "\n" . "Depth: " . $context->getDepth());
+            // print("\n");
+            // print_r("targetStack top object: ");
+            // print_r($targetStack->top()['object']);
             return $target['object'];
         }
 
@@ -102,7 +104,7 @@ class InitializedObjectConstructor implements ObjectConstructorInterface
 
             $instance = $propertyMetadata->reflection->getValue($targetStack->top()['object']);
 
-            if(is_null($instance)) {
+            if (is_null($instance) || is_array($instance)) {
                 return $this->fallbackConstructor->construct($visitor, $metadata, $data, $type, $context);
             }
 
@@ -113,11 +115,10 @@ class InitializedObjectConstructor implements ObjectConstructorInterface
 
             $targetStack->push($target);
 
-            print_r("\n" . '===' . "\n" . "Depth: " . $context->getDepth());
-            print("\n");
-            print_r("targetStack top object: ");
-            print_r($targetStack->top()['object']);
-
+            // print_r("\n" . '===' . "\n" . "Depth: " . $context->getDepth());
+            // print("\n");
+            // print_r("targetStack top object: ");
+            // print_r($targetStack->top()['object']);
             return $target['object'];
         }
 
@@ -132,8 +133,6 @@ class InitializedObjectConstructor implements ObjectConstructorInterface
             // $serializedName = $propertyMetadata->serializedName;
             // $targetName = $propertyMetadata->reflection->name;
             // $targetParent = $targetStack[count($targetStack) - 1];
-
-
 
     // protected function updateTargetStack($target)
     // {
@@ -162,19 +161,14 @@ class InitializedObjectConstructor implements ObjectConstructorInterface
 
     // }
 
-
             // var_dump($value);
             // // print_r($targetStack->top()['object']);
 
             // $targetObjectName = $propertyMetadata->reflection->name;
             // print_r($targetObjectName);
 
-
-
             // $parentProperties = $targetStack[0]['classMetadata']->reflection->getProperties();
             // print_r($parentProperties[3]->setValue('something'));
-
-
 
             // $target["object"] = $this->getTargetObject($targetStack);
 

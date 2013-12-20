@@ -47,6 +47,7 @@ class Person
      **/
     protected $bestFriend;
     public function setBestFriend($bestFriend) {$this->bestFriend = $bestFriend;}
+    public function getBestFriend() {return $this->bestFriend;}
 
     /**
      * @JMS\Type("array<AC\WebservicesBundle\Tests\Fixtures\FixtureBundle\Model\Person>")
@@ -54,6 +55,7 @@ class Person
      **/
     protected $otherFriends;
     public function setOtherFriends($otherFriends) {$this->otherFriends = $otherFriends;}
+    public function getOtherFriends() {return $this->otherFriends;}
 
     /**
      * @JMS\Type("array<AC\WebservicesBundle\Tests\Fixtures\FixtureBundle\Model\Groups>")
