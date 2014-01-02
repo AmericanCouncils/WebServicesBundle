@@ -82,7 +82,8 @@ class InitializedObjectConstructor implements ObjectConstructorInterface
             $propertyMetadata = $metaDataStack[count($metaDataStack) - 2];
             $targetStack = $context->attributes->get('targetStack')->get();
 
-            $instance = $propertyMetadata->reflection->getValue($targetStack->top()['object']);
+            $top = $targetStack->top();
+            $instance = $propertyMetadata->reflection->getValue($top['object']);
 
             if (is_null($instance) || is_array($instance)) {
                 return $this->fallbackConstructor->construct($visitor, $metadata, $data, $type, $context);
