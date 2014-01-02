@@ -40,7 +40,7 @@ class Person
     /**
      * @JMS\Type("integer")
      **/
-    protected $age;
+    public $age;
 
     /**
      * @JMS\Type("AC\WebservicesBundle\Tests\Fixtures\FixtureBundle\Model\Person")

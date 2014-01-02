@@ -59,7 +59,6 @@ class InitializedObjectConstructor implements ObjectConstructorInterface
     {
         $updateNestedData = FALSE;
 
-        // check if we have gone back up, pop the stack if so
         if ($context->attributes->containsKey("targetStack")) {
             $targetStack = $context->attributes->get('targetStack')->get();
             $lastDepth = $targetStack->top()['depth'];
@@ -91,10 +90,6 @@ class InitializedObjectConstructor implements ObjectConstructorInterface
 
             $targetStack->push($target);
 
-            // print_r("\n" . '===' . "\n" . "Depth: " . $context->getDepth());
-            // print("\n");
-            // print_r("targetStack top object: ");
-            // print_r($targetStack->top()['object']);
             return $target['object'];
         }
 
@@ -115,10 +110,6 @@ class InitializedObjectConstructor implements ObjectConstructorInterface
 
             $targetStack->push($target);
 
-            // print_r("\n" . '===' . "\n" . "Depth: " . $context->getDepth());
-            // print("\n");
-            // print_r("targetStack top object: ");
-            // print_r($targetStack->top()['object']);
             return $target['object'];
         }
 
@@ -130,77 +121,3 @@ class InitializedObjectConstructor implements ObjectConstructorInterface
         True;
     }
 }
-            // $serializedName = $propertyMetadata->serializedName;
-            // $targetName = $propertyMetadata->reflection->name;
-            // $targetParent = $targetStack[count($targetStack) - 1];
-
-    // protected function updateTargetStack($target)
-    // {
-    //     return null;
-    //     // $lastDepth = $context->attributes->get('lastDepth')->get();
-    //     // $currentDepth = $context->getDepth();
-    //     // $targetStack = $context->attritbutes->get('targetStack')->get();
-    //     // if ($lastDepth > $currentDepth) {
-    //     //     // we have moved up the graph, pop the stack
-    //     //     // $targetStack->pop();
-    //     //     $this->doNothing();
-
-    //     // } elseif ($lastDepth < $currentDepth) {
-    //     //     // we have moved down the graph, push the stack
-    //     //     $this->doNothing();
-    //     //     // $targetStack->push(
-    //     //         // How do I know what the new thing is?
-    //     //     // );
-    //     // } elseif ($lastDepth === $currentDepth) {
-    //     //     $this->doNothing();
-    //     //     // we have moved along the graph. Should this be possible?
-    //     // } else {
-    //     //     $this->doNothing();
-    //     //     // something else has happened. This is probably an error.
-    //     // }
-
-    // }
-
-            // var_dump($value);
-            // // print_r($targetStack->top()['object']);
-
-            // $targetObjectName = $propertyMetadata->reflection->name;
-            // print_r($targetObjectName);
-
-            // $parentProperties = $targetStack[0]['classMetadata']->reflection->getProperties();
-            // print_r($parentProperties[3]->setValue('something'));
-
-            // $target["object"] = $this->getTargetObject($targetStack);
-
-            // return $this->updateTargetStack($target);
-
-            // print_r($targetStack);
-            // $target = $targetParent->$targetName;
-            // $target = $targetParent->
-
-            // $target = $context->attributes->get('target')->get();
-            // $target = $targetStack[count($targetStack) - 1]->$serializedName;
-            // print_r($target);
-            // print("\n");
-            // print_r("targetName: ");
-            // print_r($targetName);
-
-            // print("\n");
-            // print_r("targetParent: ");
-            // print_r($targetParent);
-
-            // print("\n");
-            // print_r("Class: ");
-            // print_r($propertyMetadata->class);
-
-            // print("\n");
-            // print_r("SerializedName: ");
-            // print_r($propertyMetadata->serializedName);
-
-            // print("\n");
-            // print_r("Data: ");
-            // print_r($data);
-        // if ($context->attributes->containsKey('target') && $context->getDepth() === 1) {
-        // if ($context->attributes->containsKey('target')) {
-        //     return $context->attributes->get('target')->get();
-        // }
