@@ -10,12 +10,13 @@ class Person
     {
         $this->name = $name;
         $this->age = $age;
-        $this->id = null;
+        $this->id = $id;
     }
 
     /**
      * @JMS\Type("integer")
      * @JMS\ReadOnly
+     * @JMS\SerializedName("id")
      **/
     protected $id;
     public function getId() { return $this->id; }

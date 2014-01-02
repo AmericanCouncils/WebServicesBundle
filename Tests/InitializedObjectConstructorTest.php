@@ -49,18 +49,26 @@ class InitializedObjectConstructorTest extends TestCase
         );
         return $betas;
     }
-    protected function createComplexRelationships()
+    protected function createCircularRelationships()
     {
         $this->allen->setBestFriend($this->barry);
         $this->barry->setBestFriend($this->clive);
         $this->clive->setBestFriend($this->davis);
         $this->davis->setBestFriend($this->edgar);
         $this->edgar->setBestFriend($this->allen);
-        $this->allen->setOtherFriends(array($this->clive, $this->davis));
-        $this->barry->setOtherFriends(array($this->davis, $this->allen));
-        $this->clive->setOtherFriends(array($this->edgar, $this->allen));
-        $this->davis->setOtherFriends(array($this->allen, $this->barry, $this->clive));
-        $this->davis->setOtherFriends(array($this->barry));
+        // $this->allen->setOtherFriends(array($this->clive, $this->davis));
+        // $this->barry->setOtherFriends(array($this->davis, $this->allen));
+        // $this->clive->setOtherFriends(array($this->edgar, $this->allen));
+        // $this->davis->setOtherFriends(array($this->allen, $this->barry, $this->clive));
+        // $this->davis->setOtherFriends(array($this->barry));
+    }
+
+    protected function createNonCircularRelationships()
+    {
+        $this->allen->setBestFriend($this->barry);
+        $this->barry->setBestFriend($this->clive);
+        $this->clive->setBestFriend($this->davis);
+        $this->davis->setBestFriend($this->edgar);
     }
     protected function deserializeWithNewData($alphas)
     {
@@ -96,6 +104,8 @@ class InitializedObjectConstructorTest extends TestCase
 
     public function testConstruct()
     {
+        $this->markTestSkipped();
+
         $existingPerson = new Person('John', 86);
         $this->context->setAttribute('target', $existingPerson);
         $newData = array(
@@ -109,61 +119,70 @@ class InitializedObjectConstructorTest extends TestCase
         );
         $decoded = json_decode($this->serializer->serialize($modifiedPerson, "json"));
 
-        $this->assertSame(27, $decoded->age);
-        $this->assertSame('John', $decoded->name);
+        $this->assertEquals(27, $decoded->age);
+        $this->assertEquals('John', $decoded->name);
     }
 
     public function testUpdateLevelOneNesting()
     {
+        $this->markTestSkipped();
         $this->allen->setBestFriend($this->barry);
         $this->context->setAttribute('target', $this->allen);
         $this->context->setAttribute('updateNestedData', TRUE);
-        $davisData = $this->serializer->serialize($this->davis,"json");
         $newData = array(
-            'bestFriend' => json_decode($davisData, TRUE)
+            'bestFriend' => $this->davis
         );
+        $serializedData = $this->serializer->serialize($newData, "json");
+
         $modifiedPerson = $this->serializer->deserialize(
-            json_encode($newData),
+            $serializedData,
             'AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\Model\Person',
             'json',
             $this->context
         );
-        $decoded = json_decode($this->serializer->serialize($modifiedPerson, "json"));
-        $this->assertSame('Davis', $decoded->bestFriend->name);
-        $this->assertSame(15, $decoded->bestFriend->age);
-
+        // var_dump($this->allen);
+        var_dump($this->barry);
+        var_dump($this->davis);
+        $this->assertNotEquals($this->barry, $this->davis);
+        $this->assertEquals($this->davis, $modifiedPerson->getBestFriend());
     }
 
     public function testUpdateLevelTwoNesting()
     {
+        $this->markTestSkipped();
+
         $this->allen->setBestFriend($this->barry);
         $this->barry->setBestFriend($this->clive);
-        $this->assertSame("Clive",
-            $this->allen->getBestFriend()->getBestFriend()->getName());
-        $davisData = $this->serializer->serialize($this->davis,"json");
+        $this->assertEquals($this->clive,
+            $this->allen->getBestFriend()->getBestFriend());
         $newData = array(
-            'bestFriend' => json_decode($davisData, TRUE)
+            'bestFriend' => $this->davis
         );
+        $serializedData = $this->serializer->serialize($newData, "json");
         $this->context->setAttribute('target', $this->barry);
         $this->context->setAttribute('updateNestedData', TRUE);
         $modifiedPerson = $this->serializer->deserialize(
-            json_encode($newData),
+            $serializedData,
             'AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\Model\Person',
             'json',
             $this->context
         );
         $decoded = json_decode($this->serializer->serialize($modifiedPerson, "json"));
-        $this->assertSame("Davis",
-            $this->allen->getBestFriend()->getBestFriend()->getName());
+        var_dump($this->clive);
+        var_dump($this->davis);
+        $this->assertEquals($this->davis,
+            $this->allen->getBestFriend()->getBestFriend());
 
     }
     public function testUpdateReverseNesting()
     {
+        $this->markTestSkipped();
+
         $this->allen->setBestFriend($this->barry);
         $this->barry->setBestFriend($this->clive);
-        $this->assertSame("Barry",
+        $this->assertEquals("Barry",
             $this->allen->getBestFriend()->getName());
-        $this->assertSame("Clive",
+        $this->assertEquals("Clive",
             $this->allen->getBestFriend()->getBestFriend()->getName());
         $this->clive->setBestFriend($this->barry);
         $cliveData = $this->serializer->serialize($this->clive,"json");
@@ -178,20 +197,22 @@ class InitializedObjectConstructorTest extends TestCase
             'json',
             $this->context
         );
-        $this->assertSame("Clive",
-            $this->allen->getBestFriend()->getName());
-        $this->assertSame("Barry",
-            $this->allen->getBestFriend()->getBestFriend()->getName());
+        $this->assertEquals($this->clive,
+            $this->allen->getBestFriend());
+        $this->assertEquals($this->barry,
+            $this->allen->getBestFriend()->getBestFriend());
     }
 
     public function testUpdateLevelOneComplexNesting()
     {
+        $this->markTestSkipped();
+
         $this->allen->setBestFriend($this->barry);
         $this->barry->setBestFriend($this->clive);
 
-        $this->assertSame("Barry",
+        $this->assertEquals("Barry",
             $this->allen->getBestFriend()->getName());
-        $this->assertSame("Clive",
+        $this->assertEquals("Clive",
             $this->allen->getBestFriend()->getBestFriend()->getName());
 
         $this->davis->setBestFriend($this->edgar);
@@ -208,20 +229,17 @@ class InitializedObjectConstructorTest extends TestCase
             $this->context
         );
 
-        $this->assertSame("Davis",
-            $this->allen->getBestFriend()->getName());
-        $this->assertSame("Edgar",
-            $this->allen->getBestFriend()->getBestFriend()->getName());
+        $this->assertEquals($this->davis,
+            $this->allen->getBestFriend());
+        $this->assertEquals($this->edgar,
+            $this->allen->getBestFriend()->getBestFriend());
     }
 
     public function testArrayUpdate()
     {
-        $this->allen->setOtherFriends(array($this->barry, $this->clive));
+        $this->markTestSkipped();
 
-        // $otherFriendsData = array(
-        //     $this->davis,
-        //     $this->edgar
-        // );
+        $this->allen->setOtherFriends(array($this->barry, $this->clive));
 
         $newData = array(
             'otherFriends' => array(
@@ -240,6 +258,9 @@ class InitializedObjectConstructorTest extends TestCase
             'json',
             $this->context
         );
+
+        $this->assertEquals($this->allen->getOtherFriends(),
+            array($this->davis, $this->edgar));
     }
 // test best friend and other friends
 // work in group somehow
@@ -278,95 +299,145 @@ class InitializedObjectConstructorTest extends TestCase
 // Serialize / update
     public function testComplexUpdateVariation1()
     {
+        $this->markTestSkipped();
         $alphas = new Group();
         $modifiedGroup = $this->deserializeWithNewData($alphas);
         $alphaMemberNames = $this->getMemberNames($modifiedGroup);
-        $this->assertEquals("Edgar", $modifiedGroup->getOwner()->getName());
-        $this->assertEquals($alphaMemberNames, array("Clive", "Davis", "Edgar"));
+        $this->assertEquals($this->edgar, $modifiedGroup->getOwner());
+        $this->assertEquals(array($this->clive, $this->davis, $this->edgar), $modifiedGroup->getMembers());
 
     }
     public function testComplexUpdateVariation2()
     {
+        $this->markTestSkipped();
         $alphas = new Group();
         $betas = $this->createBetas();
         $modifiedGroup = $this->deserializeWithNewData($alphas);
         $alphaMemberNames = $this->getMemberNames($alphas);
-        $this->assertEquals("Edgar", $modifiedGroup->getOwner()->getName());
-        $this->assertEquals($alphaMemberNames, array("Clive", "Davis", "Edgar"));
+        $this->assertEquals($this->edgar, $modifiedGroup->getOwner());
+        $this->assertEquals(array($this->clive, $this->davis, $this->edgar), $modifiedGroup->getMembers());
 
     }
     public function testComplexUpdateVariation3()
     {
+        $this->markTestSkipped();
         $alphas = $this->createAlphas();
         $modifiedGroup = $this->deserializeWithNewData($alphas);
         $alphaMemberNames = $this->getMemberNames($alphas);
-        $this->assertEquals("Edgar", $modifiedGroup->getOwner()->getName());
-        $this->assertEquals($alphaMemberNames, array("Clive", "Davis", "Edgar"));
+        $this->assertEquals($this->edgar, $modifiedGroup->getOwner());
+        $this->assertEquals(array($this->clive, $this->davis, $this->edgar), $modifiedGroup->getMembers());
 
     }
     public function testComplexUpdateVariation4()
     {
+        $this->markTestSkipped();
         $alphas = new Group();
-        $this->createComplexRelationships();
+        $this->createCircularRelationships();
         $modifiedGroup = $this->deserializeWithNewData($alphas);
         $alphaMemberNames = $this->getMemberNames($alphas);
-        $this->assertEquals("Edgar", $modifiedGroup->getOwner()->getName());
-        $this->assertEquals($alphaMemberNames, array("Clive", "Davis", "Edgar"));
-        $this->assertEquals("Allen", $this->edgar->getBestFriend()->getName());
-        $this->assertEquals("Barry", $this->allen->getBestFriend()->getName());
+        $this->assertEquals($this->edgar, $modifiedGroup->getOwner());
+        $this->assertEquals(array($this->clive, $this->davis, $this->edgar), $modifiedGroup->getMembers());
+        $this->assertEquals($this->allen, $this->edgar->getBestFriend());
+        $this->assertEquals($this->barry, $this->allen->getBestFriend());
     }
     public function testComplexUpdateVariation5()
     {
+        $this->markTestSkipped();
         $alphas = new Group();
         $betas = $this->createBetas();
-        $this->createComplexRelationships();
+        $this->createCircularRelationships();
         $modifiedGroup = $this->deserializeWithNewData($alphas);
         $alphaMemberNames = $this->getMemberNames($alphas);
-        $this->assertEquals("Edgar", $modifiedGroup->getOwner()->getName());
-        $this->assertEquals($alphaMemberNames, array("Clive", "Davis", "Edgar"));
-        $this->assertEquals("Allen", $this->edgar->getBestFriend()->getName());
-        $this->assertEquals("Barry", $this->allen->getBestFriend()->getName());
+        $this->assertEquals($this->edgar, $modifiedGroup->getOwner());
+        $this->assertEquals(array($this->clive, $this->davis, $this->edgar), $modifiedGroup->getMembers());
+        $this->assertEquals($this->allen, $this->edgar->getBestFriend());
+        $this->assertEquals($this->barry, $this->allen->getBestFriend());
 
     }
     public function testComplexUpdateVariation6()
     {
         // $this->markTestSkipped();
         $alphas = $this->createAlphas();
-        $this->createComplexRelationships();
+        $this->createCircularRelationships();
         $modifiedGroup = $this->deserializeWithNewData($alphas);
         $alphaMemberNames = $this->getMemberNames($alphas);
-        $this->assertEquals("Edgar", $modifiedGroup->getOwner()->getName());
-        $this->assertEquals($alphaMemberNames, array("Clive", "Davis", "Edgar"));
-        $this->assertEquals("Allen", $this->edgar->getBestFriend()->getName());
-        $this->assertEquals("Barry", $this->allen->getBestFriend()->getName());
+        $this->assertEquals($this->edgar, $modifiedGroup->getOwner());
+        $this->assertEquals(array($this->clive, $this->davis, $this->edgar), $modifiedGroup->getMembers());
+        $this->assertEquals($this->allen, $this->edgar->getBestFriend());
+        $this->assertEquals($this->barry, $this->allen->getBestFriend());
     }
     public function testComplexUpdateVariation7()
     {
+        $this->markTestSkipped();
         $alphas = $this->createAlphas();
         $betas = $this->createBetas();
         $modifiedGroup = $this->deserializeWithNewData($alphas);
         $alphaMemberNames = $this->getMemberNames($alphas);
-        $this->assertEquals("Edgar", $modifiedGroup->getOwner()->getName());
-        $this->assertEquals($alphaMemberNames, array("Clive", "Davis", "Edgar"));
-
+        $this->assertEquals($this->edgar, $modifiedGroup->getOwner());
+        $this->assertEquals(array($this->clive, $this->davis, $this->edgar), $modifiedGroup->getMembers());
     }
 
     public function testComplexUpdateVariation8()
     {
-        // $this->markTestSkipped();
+        $this->markTestSkipped();
+
         $alphas = $this->createAlphas();
         $betas = $this->createBetas();
-        $this->createComplexRelationships();
+        $this->createCircularRelationships();
         $modifiedGroup = $this->deserializeWithNewData($alphas);
         $alphaMemberNames = $this->getMemberNames($alphas);
-        $this->assertEquals("Edgar", $modifiedGroup->getOwner()->getName());
+        $this->assertEquals($this->edgar, $modifiedGroup->getOwner());
+        $this->assertEquals(array($this->clive, $this->davis, $this->edgar), $modifiedGroup->getMembers());
+        $this->assertEquals($this->allen, $this->edgar->getBestFriend());
+        $this->assertEquals($this->barry, $this->allen->getBestFriend());
+    }
+
+    public function testComplexUpdateVariation9()
+    {
+        $this->markTestSkipped();
+
+        $alphas = $this->createAlphas();
+        $this->createNonCircularRelationships();
+        $modifiedGroup = $this->deserializeWithNewData($alphas);
+        $alphaMemberNames = $this->getMemberNames($alphas);
+        $this->assertEquals($this->edgar, $modifiedGroup->getOwner());
+        $this->assertEquals(array($this->clive, $this->davis, $this->edgar), $modifiedGroup->getMembers());
+        $this->assertEquals($this->barry, $this->allen->getBestFriend());
+    }
+
+    public function testComplexUpdateVariation10()
+    {
+        $this->markTestSkipped();
+
+        $alphas = $this->createAlphas();
+        $this->allen->setBestFriend($this->barry);
+        $this->barry->setBestFriend($this->clive);
+        $this->clive->setBestFriend($this->davis);
+        $this->davis->setBestFriend($this->edgar);
+        // $this->edgar->setBestFriend($this->allen);
+        $this->allen->setOtherFriends(array($this->clive, $this->davis));
+        $this->barry->setOtherFriends(array($this->davis, $this->allen));
+        $this->clive->setOtherFriends(array($this->edgar, $this->allen));
+        $this->davis->setOtherFriends(array($this->allen, $this->barry, $this->clive));
+        $this->davis->setOtherFriends(array($this->barry));
+        $modifiedGroup = $this->deserializeWithNewData($alphas);
+        $alphaMemberNames = $this->getMemberNames($alphas);
+        // print_r($modifiedGroup->getOwner());
+        $this->assertEquals($this->edgar, $modifiedGroup->getOwner());
         $this->assertEquals($alphaMemberNames, array("Clive", "Davis", "Edgar"));
-        $this->assertEquals("Allen", $this->edgar->getBestFriend()->getName());
-        $this->assertEquals("Barry", $this->allen->getBestFriend()->getName());
+
+        $this->assertEquals($this->allen->getBestFriend(),$this->barry);
+        $this->assertEquals($this->barry->getBestFriend(),$this->clive);
+        $this->assertEquals($this->clive->getBestFriend(),$this->davis);
+        $this->assertEquals($this->davis->getBestFriend(),$this->edgar);
+
+        // $this->assertEquals("Allen", $this->edgar->getBestFriend()->getName());
     }
 
     public function testComplexStructure()
     {
+        $this->markTestSkipped();
+
         $this->context->setAttribute('target', $this->allen);
         $this->allen->setBestFriend($this->edgar);
         $this->context->setAttribute('updateNestedData', TRUE);
@@ -395,6 +466,8 @@ class InitializedObjectConstructorTest extends TestCase
 
     public function testMultipleUpdate()
     {
+        $this->markTestSkipped();
+
         $this->allen->setOtherFriends(array($this->barry, $this->clive));
         $this->barry->setBestFriend($this->edgar);
         $this->context->setAttribute('target', $this->allen);
@@ -423,62 +496,3 @@ class InitializedObjectConstructorTest extends TestCase
         );
     }
 }
-
-
-
-        // $alphas = new Group();
-        // $alphas->setOwner($this->allen);
-        // $alphas->setMembers(array(
-        //        $this->allen,
-        //        $this->barry,
-        //        $this->clive
-        //     )
-        // );
-        // $betas = new Group();
-        // $betas->setOwner($this->clive);
-        // $betas->setMembers(array(
-        //        $this->barry,
-        //        $this->clive,
-        //        $this->davis
-        //     )
-        // );
-
-        // // set up relationships (should survive unchanged)
-        // $this->allen->setBestFriend($this->barry);
-        // $this->barry->setBestFriend($this->clive);
-        // $this->clive->setBestFriend($this->davis);
-        // $this->davis->setBestFriend($this->edgar);
-        // $this->edgar->setBestFriend($this->allen);
-        // $this->allen->setOtherFriends(array($this->clive, $this->davis));
-        // $this->barry->setOtherFriends(array($this->davis, $this->allen));
-        // $this->clive->setOtherFriends(array($this->edgar, $this->allen));
-        // $this->davis->setOtherFriends(array($this->allen, $this->barry, $this->clive));
-        // $this->davis->setOtherFriends(array($this->barry));
-
-
-        // $newData = array(
-        //     'owner' => $this->edgar,
-        //     'members' => array(
-        //         $this->clive,
-        //         $this->davis,
-        //         $this->edgar
-        //     )
-        // );
-        // $serializedData = $this->serializer->serialize($newData, "json");
-
-        // $this->context->setAttribute('target', $alphas);
-        // $this->context->setAttribute('updateNestedData', TRUE);
-        // $modifiedGroup = $this->serializer->deserialize(
-        //     $serializedData,
-        //     'AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\Model\Group',
-        //     'json',
-        //     $this->context
-        // );
-        // $this->assertEquals("Edgar", $modifiedGroup->getOwner()->getName());
-        // $alphaMemberNames = array();
-        // foreach ($modifiedGroup->getMembers() as $member) {
-        //     $alphaMemberNames[] = $member->getName();
-        // }
-        // $this->assertEquals($alphaMemberNames, array("Clive", "Davis", "Edgar"));
-        // $this->assertEquals("Allen", $this->edgar->getBestFriend()->getName());
-        // $this->assertEquals("Barry", $this->allen->getBestFriend()->getName());
