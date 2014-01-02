@@ -100,16 +100,19 @@ class Controllers extends Controller
 
     /**
      * For test purposes, only use JSON for this route.
-     * 
+     *
      * @Route("/api/people/simple/{id}.{_format}", defaults={"_format" = "json"})
      * @Method({"POST", "PUT"})
      **/
     public function apiSimpleModifyPerson(Request $request)
     {
+        // var_dump($this->get("ac_web_services.initialized_object_constructor"));
         $existingPerson = new Person('John', 86);
 
         $serializer = $this->container->get('serializer');
-        $context = DeserializationContext::create()->attributes->set('target', $existingPerson);
+
+        $context = DeserializationContext::create();
+        $context->setAttribute('target', $existingPerson);
 
         $modifiedPerson = $serializer->deserialize(
             $request->getContent(),

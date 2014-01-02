@@ -10,12 +10,13 @@ class Person
     {
         $this->name = $name;
         $this->age = $age;
-        $this->id = null;
+        $this->id = $id;
     }
 
     /**
      * @JMS\Type("integer")
      * @JMS\ReadOnly
+     * @JMS\SerializedName("id")
      **/
     protected $id;
     public function getId() { return $this->id; }
@@ -39,17 +40,23 @@ class Person
     /**
      * @JMS\Type("integer")
      **/
-    protected $age;
+    public $age;
 
     /**
      * @JMS\Type("AC\WebservicesBundle\Tests\Fixtures\FixtureBundle\Model\Person")
+     * @JMS\SerializedName("bestFriend")
      **/
     protected $bestFriend;
+    public function setBestFriend($bestFriend) {$this->bestFriend = $bestFriend;}
+    public function getBestFriend() {return $this->bestFriend;}
 
     /**
      * @JMS\Type("array<AC\WebservicesBundle\Tests\Fixtures\FixtureBundle\Model\Person>")
+     * @JMS\SerializedName("otherFriends")
      **/
     protected $otherFriends;
+    public function setOtherFriends($otherFriends) {$this->otherFriends = $otherFriends;}
+    public function getOtherFriends() {return $this->otherFriends;}
 
     /**
      * @JMS\Type("array<AC\WebservicesBundle\Tests\Fixtures\FixtureBundle\Model\Groups>")

@@ -24,7 +24,7 @@ if (class_exists('Doctrine\Common\Annotations\AnnotationRegistry')) {
 $tmpDir = sys_get_temp_dir().'/ACWebServicesBundleTests';
 if (file_exists($tmpDir)) {
     foreach (new DirectoryIterator($tmpDir) as $fileInfo) {
-        if(!$fileInfo->isDot()) {
+        if (!$fileInfo->isDot()) {
             unlink($fileInfo->getPathname());
         }
     }
