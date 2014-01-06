@@ -22,7 +22,6 @@ class Controller extends BaseController
         $serializerFormat = $decoder->getRequestBodyFormat($request);
 
         //TODO: check for post/put form data and... do what exactly, parse to json_encode to unserialize?
-
         return $this->deserialize($request->getContent(), $class, $serializerFormat, $ctx);
     }
 

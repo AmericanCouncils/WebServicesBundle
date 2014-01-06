@@ -34,6 +34,7 @@ class InitializedObjectConstructorTest extends TestCase
                $this->clive
             )
         );
+
         return $alphas;
     }
 
@@ -47,6 +48,7 @@ class InitializedObjectConstructorTest extends TestCase
                $this->davis
             )
         );
+
         return $betas;
     }
     protected function createCircularRelationships()
@@ -96,7 +98,6 @@ class InitializedObjectConstructorTest extends TestCase
         return $modifiedGroup;
     }
 
-
     public function testConstruct()
     {
 
@@ -116,17 +117,6 @@ class InitializedObjectConstructorTest extends TestCase
         $this->assertEquals(27, $decoded->age);
         $this->assertEquals('John', $decoded->name);
     }
-
-
-
-
-
-
-
-
-
-
-
 
     public function testStuff()
     {
@@ -157,9 +147,6 @@ class InitializedObjectConstructorTest extends TestCase
         $this->assertEquals(spl_object_hash($modified->getBestFriend()->getBestFriend()), spl_object_hash($p3));
         $this->assertEquals(spl_object_hash($modified->getBestFriend()->getBestFriend()->getBestFriend()), spl_object_hash($p1));
     }
-
-
-
 
     public function testComplexStructure()
     {

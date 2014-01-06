@@ -35,7 +35,7 @@ class Configuration implements ConfigurationInterface
                     ->defaultValue($def['response_format_headers'])
                     ->validate()
                         ->always()
-                        ->then(function($val) use ($def) {
+                        ->then(function ($val) use ($def) {
                             return array_merge($def['response_format_headers'], $val);
                         })
                     ->end()
@@ -48,7 +48,7 @@ class Configuration implements ConfigurationInterface
                             ->defaultValue($def['input_format_types'])
                             ->validate()
                                 ->always()
-                                ->then(function($val) use ($def) {
+                                ->then(function ($val) use ($def) {
                                     return array_merge($def['input_format_types'], $val);
                                 })
                             ->end()
