@@ -66,8 +66,21 @@ class ApiNegotiationTest extends TestCase
         $this->assertSame('da', $negotiator->negotiateResponseLanguage($req));
     }
 
+    public function testNegotiateResponseEncoding()
+    {
+        $negotiator = Negotiator::create()->setEncodingPriorities(array('gzip','deflate'));
+        $req = Request::create('GET', '/foo');
+        $req->headers->set('Accept-Encoding', 'gzip,deflate,sdch');
+
+        $this->assertSame('gzip', $negotiator->negotiateResponseEncoding($req));
+    }
+
     public function testNegotiateResponseCharset()
     {
+        $negotiator = Negotiator::create()->setCharsetPriorities(array('utf-8','koi-8','windows-1251'));
+        $req = Request::create('GET', '/foo');
+        $req->headers->set('Accept-Charset', 'ISO-8859-1, Big5;q=0.6,utf-8;q=0.7, *;q=0.5');
 
+        $this->assertSame('utf-8', $negotiator->negotiateResponseCharset($req));
     }
 }

@@ -11,7 +11,7 @@ services:
             -  { name: kernel.event_listener, event: kernel.request, method: onKernelEarlyRequest, priority: 255 }
             -  { name: kernel.event_listener, event: kernel.request, method: onKernelLateRequest, priority: -255 }
 
-    #TODO: consider moving into optional config file
+    #TODO: consider moving serializer stuff into optional config file
     ac_web_services.initialized_object_constructor:
         class: AC\WebServicesBundle\Serializer\InitializedObjectConstructor
         arguments:
@@ -24,7 +24,6 @@ services:
         alias: ac_web_services.initialized_object_constructor
         # alias: ac_web_services.initialized_object_constructor public: false
 
-    #TODO: consider moving into optional config file
     ac_web_services.negotiator:
         class: AC\WebServicesBundle\Negotiator
         arguments:
@@ -32,3 +31,4 @@ services:
             - %ac_web_services.negotiation.response_format_priorities%
             - %ac_web_services.negotiation.response_language_priorities%
             - %ac_web_services.negotiation.response_charset_priorities%
+            - %ac_web_services.negotiation.response_encoding_priorities%

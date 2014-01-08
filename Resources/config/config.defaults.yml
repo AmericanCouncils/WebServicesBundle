@@ -1,9 +1,11 @@
-# these are the defaults used internally by the Configuration class when processing
+# This is loaded directly by DependencyInjection/Configuration when processing app config - these values
+# are not available directly in the container.
 default_response_format: 'json'
 serializable_formats: ['json','xml','yml']
 response_format_priorities: ['json','xml','yml','html']
 response_language_priorities: ['en']
 response_charset_priorities: ['UTF-8']
+response_encoding_priorities: ['gzip','deflate']
 input_format_types:
     json: ['application/json']
     yml: ['application/yaml', 'text/yaml', 'application/x-yaml', 'text/x-yaml']
