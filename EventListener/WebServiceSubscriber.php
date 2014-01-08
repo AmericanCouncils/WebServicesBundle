@@ -130,6 +130,7 @@ class WebServiceSubscriber implements EventSubscriberInterface
                 //set other relevant values for this request
                 $config['suppress_response_codes'] = ($config['allow_code_suppression']) ? $request->query->get('_suppress_codes', false) : false;
                 $config['http_response_format'] = $request->get('_format', false);
+                $config['negotiated'] = false;
 
                 //subsequent listeners will check the request attributes for relevant configuration
                 $request->attributes->set('_ac_web_service', $config);
@@ -255,6 +256,11 @@ class WebServiceSubscriber implements EventSubscriberInterface
 
         //if supression is active, always return 200 no matter what
         $config = $e->getRequest()->attributes->get('_ac_web_service');
+
+        if (!$config['negotiated']) {
+            $config = $this->negotiateResponseFormat($e->getRequest(), $config);
+        }
+
         if ($config['suppress_response_codes']) {
             $response = $response->setStatusCode(200);
         }
@@ -361,6 +367,8 @@ class WebServiceSubscriber implements EventSubscriberInterface
 
         $config['http_response_format'] = ($responseFormat) ? $responseFormat : $config['default_response_format'];
         $config['serializer_format'] = in_array($config['http_response_format'], $this->serializableFormats) ? $config['http_response_format'] : false;
+
+        $config['negotiated'] = true;
 
         return $this->checkForJsonp($request, $config);
     }
