@@ -26,11 +26,11 @@ class Negotiator
     /**
      * Receives configuration to use for negogiation tasks.
      *
-     * @param array $inputFormatMap         A map of 'content/type'=>'format'
-     * @param array $formatPriorities       Array of priorities for preferred formats
-     * @param array $langPriorities         Array of priorities for preferred languages
-     * @param array $charsetPriorities      Array of priorities for preferred charsets
-     * @param array $encodingPriorities     Array of priorities for preferred encodings
+     * @param array $inputFormatMap     A map of 'content/type'=>'format'
+     * @param array $formatPriorities   Array of priorities for preferred formats
+     * @param array $langPriorities     Array of priorities for preferred languages
+     * @param array $charsetPriorities  Array of priorities for preferred charsets
+     * @param array $encodingPriorities Array of priorities for preferred encodings
      */
     public function __construct(
         $inputFormatMap = array(),
@@ -50,10 +50,10 @@ class Negotiator
     /**
      * Convenient static creation method for chainable creation/use.
      *
-     * @param  array  $map
-     * @param  array  $formats
-     * @param  array  $langs
-     * @param  array  $charsets
+     * @param  array      $map
+     * @param  array      $formats
+     * @param  array      $langs
+     * @param  array      $charsets
      * @return Negotiator
      */
     public static function create($map = array(), $formats = array(), $langs = array(), $charsets = array())
@@ -164,6 +164,9 @@ class Negotiator
     {
         if (!$this->formatNegotiator) {
             $this->formatNegotiator = new FormatNegotiator();
+
+            //TODO: register additional formats
+            $this->formatNegotiator->registerFormat('yml', array('application/yaml', 'text/yaml', 'application/x-yaml', 'text/x-yaml'));
         }
 
         return $this->formatNegotiator;

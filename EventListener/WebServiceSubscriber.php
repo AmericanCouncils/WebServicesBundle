@@ -296,6 +296,7 @@ class WebServiceSubscriber implements EventSubscriberInterface
         $data = $result;
         $serializationContext = null;
         $template = false;
+        $outgoingFormat = $cfg['default_response_format'];
 
         //check specifically for service response
         if ($result instanceof ServiceResponse) {
@@ -323,23 +324,25 @@ class WebServiceSubscriber implements EventSubscriberInterface
                 $data = array($templateKey => $data);
             }
 
+            $outgoingFormat = $cfg['http_response_format'];
             $content = $this->container->get('templating')->render($template, $data);
         }
         //or serialize data if possible
         else if (in_array($cfg['serializer_format'], $this->serializableFormats)) {
 
             //load serializer, encode response structure into requested format
+            $outgoingFormat = $cfg['serializer_format'];
+            //var_dump(sprintf("Using [%s]", $outgoingFormat));
             $content = $this->container->get('serializer')->serialize($data, $cfg['serializer_format'], $serializationContext);
-        }
-
-
-        else {
+        } else {
             //the negotiated response format may not be a serializable one, if not, use the configured default format
             if (
                 !in_array($cfg['http_response_format'], $this->serializableFormats)
                 &&
                 in_array($cfg['default_response_format'], $this->serializableFormats)
             ) {
+                //var_dump(sprintf("Negotiated [%s], using [%s]", $cfg['http_response_format'], $cfg['default_response_format']));
+                $outgoingFormat = $cfg['default_response_format'];
                 $content = $this->container->get('serializer')->serialize($data, $cfg['default_response_format'], $serializationContext);
             }
 
@@ -351,7 +354,7 @@ class WebServiceSubscriber implements EventSubscriberInterface
 
         //merge headers
         $additionalHeaders = isset($cfg['additional_headers']) ? $cfg['additional_headers'] : array();
-        $headers = array_merge($headers, array_merge($additionalHeaders, $this->formatHeaders[$cfg['http_response_format']]));
+        $headers = array_merge($headers, array_merge($additionalHeaders, $this->formatHeaders[$outgoingFormat]));
 
         //set the final response
         $e->setResponse(new Response($content, $outgoingStatusCode, $headers));
@@ -377,7 +380,6 @@ class WebServiceSubscriber implements EventSubscriberInterface
 
         $config['http_response_format'] = ($responseFormat) ? $responseFormat : $config['default_response_format'];
         $config['serializer_format'] = in_array($config['http_response_format'], $this->serializableFormats) ? $config['http_response_format'] : false;
-
         $config['negotiated'] = true;
 
         return $this->checkForJsonp($request, $config);

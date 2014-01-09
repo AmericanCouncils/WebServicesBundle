@@ -54,18 +54,20 @@ EOT;
 
     public function testNegotiateResponseFormat()
     {
-        //accept yaml header first priority
-        $res = $this->callApi('GET', '/api/override/success', array(), array(), array(
-            'HTTP_ACCEPT' => 'application/yaml;q=0.9,text/html,application/xhtml+xml,application/xml;q=0.8,*/*;q=0.7'
-        ));
-        $this->assertSame(200, $res->getStatusCode());
-        $this->assertSame('application/yaml', $res->headers->get('Content-Type'));
-
         //accept xml header highest priority
         $res = $this->callApi('GET', '/api/override/success', array(), array(), array(
-            'HTTP_ACCEPT' => 'application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+            'HTTP_ACCEPT' => 'application/xhtml+xml;q=0.9,application/xml,*/*;q=0.8'
         ));
         $this->assertSame(200, $res->getStatusCode());
         $this->assertSame('application/xml', $res->headers->get('Content-Type'));
+
+        //accept yaml header first priority
+        $res = $this->callApi('GET', '/api/override/success', array(), array(), array(
+            'HTTP_ACCEPT' => 'application/xhtml+xml;q=0.9,application/yaml,*/*;q=0.8'
+        ));
+        $this->assertSame(200, $res->getStatusCode());
+        $this->assertSame('text/x-yaml; charset=UTF-8', $res->headers->get('Content-Type'));
+
+
     }
 }

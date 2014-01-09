@@ -38,7 +38,7 @@ class Controller extends BaseController
         $obj = $this->container->get('serializer')->deserialize($data, $class, $format, $ctx);
 
         if ($ctx instanceof DeserializationContext) {
-            if ($errors = $ctx->attributes->get('validation_errors')) {
+            if ($errors = $ctx->getValidationErrors()) {
                 throw new ValidationException($errors);
             }
         }

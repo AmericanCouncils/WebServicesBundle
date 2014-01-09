@@ -6,9 +6,12 @@ response_format_priorities: ['json','xml','yml','html']
 response_language_priorities: ['en']
 response_charset_priorities: ['UTF-8']
 response_encoding_priorities: ['gzip','deflate']
+
+#TODO: implement this in config for reals
+output_additional_negotiation_formats:
+    yml: ['application/yaml', 'text/yaml', 'application/x-yaml', 'text/x-yaml']
 input_format_types:
     json: ['application/json']
-    yml: ['application/yaml', 'text/yaml', 'application/x-yaml', 'text/x-yaml']
     xml: ['application/xml']
 #    form: ['application/x-www-form-urlencoded', 'multipart/form-data']
 response_format_headers:

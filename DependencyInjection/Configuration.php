@@ -15,7 +15,7 @@ class Configuration implements ConfigurationInterface
 
     public function __construct()
     {
-        $this->defaults = Yaml::parse(__DIR__.'/../Resources/config/config.defaults.yml');;
+        $this->defaults = Yaml::parse(__DIR__.'/../Resources/config/config.defaults.yml');
     }
 
     public function getConfigTreeBuilder()

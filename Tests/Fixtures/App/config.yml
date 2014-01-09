@@ -39,7 +39,6 @@ jms_serializer:
 
 ac_web_services:
 #    serializable_formats: ['json','xml','yml']
-#    negotiation: ~
     response_format_headers:
         yml:
             'Content-Type': 'text/x-yaml; charset=UTF-8'
