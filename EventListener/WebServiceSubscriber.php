@@ -332,9 +332,21 @@ class WebServiceSubscriber implements EventSubscriberInterface
             $content = $this->container->get('serializer')->serialize($data, $cfg['serializer_format'], $serializationContext);
         }
 
-        //otherwise we don't know what to do with this response data...
+
         else {
-            throw new HttpException(500, 'Could not process response format ['.$cfg['http_response_format'].'].  It is not a known serialization format, and no template for the format was specified.');
+            //the negotiated response format may not be a serializable one, if not, use the configured default format
+            if (
+                !in_array($cfg['http_response_format'], $this->serializableFormats)
+                &&
+                in_array($cfg['default_response_format'], $this->serializableFormats)
+            ) {
+                $content = $this->container->get('serializer')->serialize($data, $cfg['default_response_format'], $serializationContext);
+            }
+
+            //otherwise we don't know what to do with this response data...
+            else {
+                throw new HttpException(500, 'Could not process response format ['.$cfg['http_response_format'].'].  It is not a known serialization format, and no template for the format was specified.');
+            }
         }
 
         //merge headers
@@ -360,9 +372,7 @@ class WebServiceSubscriber implements EventSubscriberInterface
         $responseFormat = strtolower($request->get('_format', false));
 
         if (!$responseFormat) {
-            //TODO: eventual robust content negotiation here, for now just check request for explicit declaration
-            //TODO: negotiate based on accept headers
-            //$responseFormat = $this->container->get('format_negotiator')->getResponseFormatForRequest($request);
+            $responseFormat = $this->container->get('ac_web_services.negotiator')->negotiateResponseFormat($request);
         }
 
         $config['http_response_format'] = ($responseFormat) ? $responseFormat : $config['default_response_format'];

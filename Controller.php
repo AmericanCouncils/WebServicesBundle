@@ -18,10 +18,8 @@ class Controller extends BaseController
     protected function decodeRequest($class, Context $ctx = null)
     {
         $request = $this->container->get('request');
-        $decoder = $this->container->get('ac_web_services.request_decoder');
-        $serializerFormat = $decoder->getRequestBodyFormat($request);
+        $serializerFormat = $this->container->get('ac_web_services.negotiator')->negotiateRequestFormat($request);
 
-        //TODO: check for post/put form data and... do what exactly, parse to json_encode to unserialize?
         return $this->deserialize($request->getContent(), $class, $serializerFormat, $ctx);
     }
 

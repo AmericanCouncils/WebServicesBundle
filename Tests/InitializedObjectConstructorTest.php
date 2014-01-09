@@ -72,31 +72,6 @@ class InitializedObjectConstructorTest extends TestCase
         $this->clive->setBestFriend($this->davis);
         $this->davis->setBestFriend($this->edgar);
     }
-    protected function deserializeWithNewData($alphas)
-    {
-        $newData = array(
-            'owner' => $this->edgar,
-            'members' => array(
-                $this->clive,
-                $this->davis,
-                $this->edgar
-            )
-        );
-        $serializedData = $this->serializer->serialize($newData, "json");
-
-        var_dump($serializedData);
-
-        $this->context->setAttribute('target', $alphas);
-        $this->context->setAttribute('updateNestedData', TRUE);
-        $modifiedGroup = $this->serializer->deserialize(
-            $serializedData,
-            'AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\Model\Group',
-            'json',
-            $this->context
-        );
-
-        return $modifiedGroup;
-    }
 
     public function testConstruct()
     {
