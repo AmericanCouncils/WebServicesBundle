@@ -13,6 +13,11 @@ class DeserializationContext extends BaseDeserializationContext
 {
     private $validationErrors = array();
 
+    public static function create()
+    {
+        return new self();
+    }
+
     public function setCreateValidationErrors($bool)
     {
         $this->setAttribute('createValidationErrors', (bool) $bool);

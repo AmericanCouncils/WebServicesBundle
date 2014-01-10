@@ -5,11 +5,8 @@ namespace AC\WebServicesBundle\Tests;
 use AC\WebServicesBundle\TestCase;
 use AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\Model\Person;
 use AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\Model\Group;
-use JMS\Serializer\DeserializationContext;
-// use AC\WebServicesBundle\Serializer\DeserializationContext;
+use AC\WebServicesBundle\Serializer\DeserializationContext;
 
-/**
- **/
 class InitializedObjectConstructorTest extends TestCase
 {
     public function setUp()
@@ -21,7 +18,6 @@ class InitializedObjectConstructorTest extends TestCase
         $this->clive = new Person("Clive", 12, 3);
         $this->davis = new Person("Davis", 15, 4);
         $this->edgar = new Person("Edgar", 11, 5);
-
     }
 
     protected function createAlphas()
@@ -77,7 +73,7 @@ class InitializedObjectConstructorTest extends TestCase
     {
 
         $existingPerson = new Person('John', 86);
-        $this->context->setAttribute('target', $existingPerson);
+        $this->context->setTarget($existingPerson);
         $newData = array(
             'age' => 27
         );
@@ -102,8 +98,8 @@ class InitializedObjectConstructorTest extends TestCase
         $p2->setBestFriend($p3);
         $p3->setBestFriend($p1);
 
-        $this->context->setAttribute('target', $p1);
-        $this->context->setAttribute('updateNestedData', TRUE);
+        $this->context->setTarget($p1);
+        $this->context->setSerializeNested(true);
         $modified = $this->serializer->deserialize(json_encode(array(
             'bestFriend' => array(
                 'bestFriend' => array(
@@ -126,9 +122,10 @@ class InitializedObjectConstructorTest extends TestCase
     public function testComplexStructure()
     {
 
-        $this->context->setAttribute('target', $this->allen);
         $this->allen->setBestFriend($this->edgar);
-        $this->context->setAttribute('updateNestedData', TRUE);
+
+        $this->context->setTarget($this->allen);
+        $this->context->setSerializeNested(true);
 
         $newData = array(
             'bestFriend' => array(
@@ -157,8 +154,8 @@ class InitializedObjectConstructorTest extends TestCase
 
         $this->allen->setOtherFriends(array($this->barry, $this->clive));
         $this->barry->setBestFriend($this->edgar);
-        $this->context->setAttribute('target', $this->allen);
-        $this->context->setAttribute('updateNestedData', TRUE);
+        $this->context->setTarget($this->allen);
+        $this->context->setSerializeNested(true);
         $newData = array(
             'name' => 'Bazil',
             'otherFriends' => array(
