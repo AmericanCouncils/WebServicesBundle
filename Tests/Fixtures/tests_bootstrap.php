@@ -1,6 +1,6 @@
 <?php
 
-//copied from https://raw.github.com/nelmio/NelmioApiDocBundle/master/Tests/bootstrap.php
+//copied & modified from https://raw.github.com/nelmio/NelmioApiDocBundle/master/Tests/bootstrap.php
 
 function includeIfExists($file)
 {

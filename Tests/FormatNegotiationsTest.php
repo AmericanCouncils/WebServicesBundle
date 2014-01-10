@@ -67,7 +67,5 @@ EOT;
         ));
         $this->assertSame(200, $res->getStatusCode());
         $this->assertSame('text/x-yaml; charset=UTF-8', $res->headers->get('Content-Type'));
-
-
     }
 }

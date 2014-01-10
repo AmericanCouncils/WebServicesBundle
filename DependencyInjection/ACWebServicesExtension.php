@@ -31,6 +31,7 @@ class ACWebServicesExtension extends Extension
         $container->setParameter('ac_web_services.negotiation.response_language_priorities', $n['response_language_priorities']);
         $container->setParameter('ac_web_services.negotiation.response_charset_priorities', $n['response_charset_priorities']);
         $container->setParameter('ac_web_services.negotiation.response_encoding_priorities', $n['response_encoding_priorities']);
+        $container->setParameter('ac_web_services.negotiation.response_additional_negotiation_formats', $n['response_additional_negotiation_formats']);
 
         //load services
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));

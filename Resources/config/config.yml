@@ -32,3 +32,4 @@ services:
             - %ac_web_services.negotiation.response_language_priorities%
             - %ac_web_services.negotiation.response_charset_priorities%
             - %ac_web_services.negotiation.response_encoding_priorities%
+            - %ac_web_services.negotiation.response_additional_negotiation_formats%

@@ -57,6 +57,7 @@ class Configuration implements ConfigurationInterface
                         ->variableNode('response_language_priorities')->defaultValue($def['response_language_priorities'])->end()
                         ->variableNode('response_charset_priorities')->defaultValue($def['response_charset_priorities'])->end()
                         ->variableNode('response_encoding_priorities')->defaultValue($def['response_encoding_priorities'])->end()
+                        ->variableNode('response_additional_negotiation_formats')->defaultValue($def['response_additional_negotiation_formats'])->end()
                     ->end()
                 ->end()
                 ->arrayNode('paths')

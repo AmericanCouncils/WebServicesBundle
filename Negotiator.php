@@ -22,6 +22,7 @@ class Negotiator
     private $formatPriorities;
     private $charsetPriorities;
     private $basicNegotiator;
+    private $additionalResponseNegotiationFormats = array();
 
     /**
      * Receives configuration to use for negogiation tasks.
@@ -37,7 +38,8 @@ class Negotiator
         $formatPriorities = array(),
         $langPriorities = array(),
         $charsetPriorities = array(),
-        $encodingPriorities = array()
+        $encodingPriorities = array(),
+        $additionalResponseNegotiationFormats = array()
     )
     {
         $this->inputFormatMap = $inputFormatMap;
@@ -45,6 +47,7 @@ class Negotiator
         $this->formatPriorities = $formatPriorities;
         $this->charsetPriorities = $charsetPriorities;
         $this->encodingPriorities = $encodingPriorities;
+        $this->additionalResponseNegotiationFormats = $additionalResponseNegotiationFormats;
     }
 
     /**
@@ -165,8 +168,9 @@ class Negotiator
         if (!$this->formatNegotiator) {
             $this->formatNegotiator = new FormatNegotiator();
 
-            //TODO: register additional formats
-            $this->formatNegotiator->registerFormat('yml', array('application/yaml', 'text/yaml', 'application/x-yaml', 'text/x-yaml'));
+            foreach ($this->additionalResponseNegotiationFormats as $format => $mimeTypes) {
+                $this->formatNegotiator->registerFormat($format, $mimeTypes);
+            }
         }
 
         return $this->formatNegotiator;
