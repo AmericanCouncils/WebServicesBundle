@@ -41,6 +41,8 @@ class Person
      * @JMS\Type("integer")
      **/
     public $age;
+    public function getAge() { return $this->age; }
+    public function setAge($age) { $this->age = $age; }
 
     /**
      * @JMS\Type("AC\WebservicesBundle\Tests\Fixtures\FixtureBundle\Model\Person")
