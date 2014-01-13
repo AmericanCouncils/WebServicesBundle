@@ -45,6 +45,7 @@ class Configuration implements ConfigurationInterface
                     ->canBeDisabled()
                     ->children()
                         ->booleanNode('allow_deserialize_into_target')->defaultFalse()->end()
+                        ->booleanNode('enable_form_deserialization')->defaultFalse()->end()
                     ->end()
                 ->end()
                 ->arrayNode('negotiation')

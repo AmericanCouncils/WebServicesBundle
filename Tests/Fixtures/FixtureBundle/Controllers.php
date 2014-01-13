@@ -115,7 +115,6 @@ class Controllers extends Controller
      **/
     public function apiSimpleModifyPerson(Request $request)
     {
-        // var_dump($this->get("ac_web_services.initialized_object_constructor"));
         $existingPerson = new Person('John', 86);
 
         $serializer = $this->container->get('serializer');

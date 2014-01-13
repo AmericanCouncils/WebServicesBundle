@@ -2,15 +2,16 @@
 
 namespace AC\WebServicesBundle\Serializer;
 
-use JMS\Serializer\Exception\RuntimeException;
+use JMS\Serializer\GenericDeserializationVisitor;
 
+/**
+ * So... it's called 'FormDeserializationVisitor', but really, it takes any old array, as $_POST data
+ * is just that.
+ */
 class FormDeserializationVisitor extends GenericDeserializationVisitor
 {
-    protected function decode($str)
+    protected function decode($data)
     {
-        $data = array();
-        parse_str($str, $data);
-
         return $data;
     }
 }

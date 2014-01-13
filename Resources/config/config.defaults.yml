@@ -11,7 +11,6 @@ response_additional_negotiation_formats:
 input_format_types:
     json: ['application/json']
     xml: ['application/xml']
-#    form: ['application/x-www-form-urlencoded', 'multipart/form-data']
 response_format_headers:
     json:
         'Content-Type': 'application/json'

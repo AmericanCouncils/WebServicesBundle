@@ -27,7 +27,11 @@ class ACWebServicesExtension extends Extension
 
         //load serializer overrides
         if ($serializer['enabled'] && $serializer['allow_deserialize_into_target']) {
-            $loader->load('config.serializer.yml');
+            $loader->load('services.serializer.yml');
+        }
+        if ($serializer['enabled'] && $serializer['enable_form_deserialization']) {
+            $container->setParameter('ac_web_services.serializer.enable_form_deserialization', true);
+            $loader->load('services.form_deserialization.yml');
         }
 
         //set processed config values in the container based on processed values
@@ -42,6 +46,6 @@ class ACWebServicesExtension extends Extension
         $container->setParameter('ac_web_services.negotiation.response_additional_negotiation_formats', $negotiation['response_additional_negotiation_formats']);
 
         //load services
-        $loader->load('config.yml');
+        $loader->load('services.yml');
     }
 }

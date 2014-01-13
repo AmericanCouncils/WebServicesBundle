@@ -17,10 +17,27 @@ class Controller extends BaseController
      **/
     protected function decodeRequest($class, Context $ctx = null)
     {
-        $request = $this->container->get('request');
+        $container = $this->container;
+        $request = $container->get('request');
         $serializerFormat = $this->container->get('ac_web_services.negotiator')->negotiateRequestFormat($request);
 
-        return $this->deserialize($request->getContent(), $class, $serializerFormat, $ctx);
+        $data = $request->getContent();
+
+        //check for raw form submission, php is stupid about this, so there needs to be a check for it here
+        if ('form' === $serializerFormat && $container->getParameter('ac_web_services.serializer.enable_form_deserialization')) {
+            $data = $request->request->all();
+            if (empty($data)) {
+                if (
+                    0 === strpos($request->headers->get('CONTENT_TYPE'), 'application/x-www-form-urlencoded')
+                    &&
+                    in_array(strtoupper($request->server->get('REQUEST_METHOD', 'GET')), array('PUT', 'DELETE', 'PATCH'))
+                ) {
+                    parse_str($request->getContent(), $data);
+                }
+            }
+        }
+
+        return $this->deserialize($data, $class, $serializerFormat, $ctx);
     }
 
     /**
@@ -54,6 +71,8 @@ class Controller extends BaseController
      **/
     protected function validate($obj)
     {
+        throw new \RuntimeException('Not yet implemented.');
+
         $errors = $this->container->get('validator')->validate($obj);
 
         if (count($errors) > 0) {
