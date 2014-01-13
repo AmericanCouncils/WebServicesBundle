@@ -7,11 +7,9 @@ use AC\WebServicesBundle\TestCase;
 class FormDeserializationTest extends TestCase
 {
 
-    public function testDeserializeFormData()
+    protected function getTestData()
     {
-        $serializer = $this->getContainer()->get('serializer');
-
-        $data = array(
+        return array(
             'name' => 'Evan',
             'age' => 34,
             'bestFriend' => array(
@@ -29,8 +27,13 @@ class FormDeserializationTest extends TestCase
                 )
             )
         );
+    }
 
-        $person = $serializer->deserialize($data, 'AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\Model\Person', 'form');
+    public function testDeserializeFormData()
+    {
+        $serializer = $this->getContainer()->get('serializer');
+
+        $person = $serializer->deserialize($this->getTestData(), 'AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\Model\Person', 'form');
 
         $this->assertSame('Evan', $person->getName());
         $this->assertSame(34, $person->getAge());
@@ -45,24 +48,7 @@ class FormDeserializationTest extends TestCase
 
     public function testApiDecodeFormSubmission()
     {
-        $data = array(
-            'name' => 'Evan',
-            'age' => 34,
-            'bestFriend' => array(
-                'name' => 'John',
-                'age' => 27
-            ),
-            'otherFriends' => array(
-                array(
-                    'name' => 'Foobert',
-                    'age' => 42
-                ),
-                array(
-                    'name' => 'Barbara',
-                    'age' => 86
-                )
-            )
-        );
+        $data = $this->getTestData();
 
         $res = $this->callApi('POST', '/api/negotiation/person', $data);
 
