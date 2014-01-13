@@ -296,6 +296,7 @@ class WebServiceSubscriber implements EventSubscriberInterface
         $data = $result;
         $serializationContext = null;
         $template = false;
+        $outgoingFormat = $cfg['default_response_format'];
 
         //check specifically for service response
         if ($result instanceof ServiceResponse) {
@@ -323,23 +324,37 @@ class WebServiceSubscriber implements EventSubscriberInterface
                 $data = array($templateKey => $data);
             }
 
+            $outgoingFormat = $cfg['http_response_format'];
             $content = $this->container->get('templating')->render($template, $data);
         }
         //or serialize data if possible
         else if (in_array($cfg['serializer_format'], $this->serializableFormats)) {
 
             //load serializer, encode response structure into requested format
+            $outgoingFormat = $cfg['serializer_format'];
+            //var_dump(sprintf("Using [%s]", $outgoingFormat));
             $content = $this->container->get('serializer')->serialize($data, $cfg['serializer_format'], $serializationContext);
-        }
+        } else {
+            //the negotiated response format may not be a serializable one, if not, use the configured default format
+            if (
+                !in_array($cfg['http_response_format'], $this->serializableFormats)
+                &&
+                in_array($cfg['default_response_format'], $this->serializableFormats)
+            ) {
+                //var_dump(sprintf("Negotiated [%s], using [%s]", $cfg['http_response_format'], $cfg['default_response_format']));
+                $outgoingFormat = $cfg['default_response_format'];
+                $content = $this->container->get('serializer')->serialize($data, $cfg['default_response_format'], $serializationContext);
+            }
 
-        //otherwise we don't know what to do with this response data...
-        else {
-            throw new HttpException(500, 'Could not process response format ['.$cfg['http_response_format'].'].  It is not a known serialization format, and no template for the format was specified.');
+            //otherwise we don't know what to do with this response data...
+            else {
+                throw new HttpException(500, 'Could not process response format ['.$cfg['http_response_format'].'].  It is not a known serialization format, and no template for the format was specified.');
+            }
         }
 
         //merge headers
         $additionalHeaders = isset($cfg['additional_headers']) ? $cfg['additional_headers'] : array();
-        $headers = array_merge($headers, array_merge($additionalHeaders, $this->formatHeaders[$cfg['http_response_format']]));
+        $headers = array_merge($headers, array_merge($additionalHeaders, $this->formatHeaders[$outgoingFormat]));
 
         //set the final response
         $e->setResponse(new Response($content, $outgoingStatusCode, $headers));
@@ -360,14 +375,11 @@ class WebServiceSubscriber implements EventSubscriberInterface
         $responseFormat = strtolower($request->get('_format', false));
 
         if (!$responseFormat) {
-            //TODO: eventual robust content negotiation here, for now just check request for explicit declaration
-            //TODO: negotiate based on accept headers
-            //$responseFormat = $this->container->get('format_negotiator')->getResponseFormatForRequest($request);
+            $responseFormat = $this->container->get('ac_web_services.negotiator')->negotiateResponseFormat($request);
         }
 
         $config['http_response_format'] = ($responseFormat) ? $responseFormat : $config['default_response_format'];
         $config['serializer_format'] = in_array($config['http_response_format'], $this->serializableFormats) ? $config['http_response_format'] : false;
-
         $config['negotiated'] = true;
 
         return $this->checkForJsonp($request, $config);

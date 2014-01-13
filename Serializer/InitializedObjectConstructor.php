@@ -41,7 +41,7 @@ class InitializedObjectConstructor implements ObjectConstructorInterface
         DeserializationContext $context
     )
     {
-        $updateNestedData = FALSE;
+        $updateNestedData = false;
 
         if ($context->attributes->containsKey("targetStack")) {
             $targetStack = $context->attributes->get('targetStack')->get();
@@ -78,7 +78,7 @@ class InitializedObjectConstructor implements ObjectConstructorInterface
             return $target['object'];
         }
 
-        if ($context->getDepth() > 1 && $updateNestedData === TRUE) {
+        if ($context->getDepth() > 1 && $updateNestedData === true) {
             $propertyMetadata = $metaDataStack[count($metaDataStack) - 2];
             $targetStack = $context->attributes->get('targetStack')->get();
 
@@ -100,10 +100,5 @@ class InitializedObjectConstructor implements ObjectConstructorInterface
         }
 
         return $this->fallbackConstructor->construct($visitor, $metadata, $data, $type, $context);
-    }
-
-    private function doNothing()
-    {
-        True;
     }
 }

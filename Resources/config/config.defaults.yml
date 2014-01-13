@@ -1,0 +1,27 @@
+# This is loaded directly by DependencyInjection/Configuration when processing app config - these values
+# are not available directly in the container.
+default_response_format: 'json'
+serializable_formats: ['json','xml','yml']
+response_format_priorities: ['json','xml','yml','html']
+response_language_priorities: ['en']
+response_charset_priorities: ['UTF-8']
+response_encoding_priorities: ['gzip','deflate']
+response_additional_negotiation_formats:
+    yml: ['application/yaml', 'text/yaml', 'application/x-yaml', 'text/x-yaml']
+input_format_types:
+    json: ['application/json']
+    xml: ['application/xml']
+#    form: ['application/x-www-form-urlencoded', 'multipart/form-data']
+response_format_headers:
+    json:
+        'Content-Type': 'application/json'
+    jsonp:
+        'Content-Type': 'application/javascript'
+    yml:
+        'Content-Type': 'application/yaml'
+    xml:
+        'Content-Type': 'application/xml'
+    html:
+        'Content-Type': 'text/html; charset=UTF-8'
+    xhtml:
+        'Content-Type': 'application/xhtml+xml'

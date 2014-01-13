@@ -18,8 +18,7 @@ class Controller extends BaseController
     protected function decodeRequest($class, Context $ctx = null)
     {
         $request = $this->container->get('request');
-        $decoder = $this->container->get('ac_web_services.request_decoder');
-        $serializerFormat = $decoder->getRequestBodyFormat($request);
+        $serializerFormat = $this->container->get('ac_web_services.negotiator')->negotiateRequestFormat($request);
 
         return $this->deserialize($request->getContent(), $class, $serializerFormat, $ctx);
     }
@@ -39,7 +38,7 @@ class Controller extends BaseController
         $obj = $this->container->get('serializer')->deserialize($data, $class, $format, $ctx);
 
         if ($ctx instanceof DeserializationContext) {
-            if ($errors = $ctx->attributes->get('validation_errors')) {
+            if ($errors = $ctx->getValidationErrors()) {
                 throw new ValidationException($errors);
             }
         }

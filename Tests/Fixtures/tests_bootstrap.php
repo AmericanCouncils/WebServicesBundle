@@ -1,6 +1,6 @@
 <?php
 
-//copied from https://raw.github.com/nelmio/NelmioApiDocBundle/master/Tests/bootstrap.php
+//copied & modified from https://raw.github.com/nelmio/NelmioApiDocBundle/master/Tests/bootstrap.php
 
 function includeIfExists($file)
 {
@@ -19,14 +19,16 @@ if (class_exists('Doctrine\Common\Annotations\AnnotationRegistry')) {
     \Doctrine\Common\Annotations\AnnotationRegistry::registerLoader(array($loader, 'loadClass'));
 }
 
-//hack to clear cache directories before running test scripts
-/*
+//remove cached data before running tests
 $tmpDir = sys_get_temp_dir().'/ACWebServicesBundleTests';
 if (file_exists($tmpDir)) {
-    foreach (new DirectoryIterator($tmpDir) as $fileInfo) {
-        if (!$fileInfo->isDot()) {
-            unlink($fileInfo->getPathname());
-        }
+    $files = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($tmpDir, RecursiveDirectoryIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::CHILD_FIRST
+    );
+
+    foreach ($files as $fileinfo) {
+        $remove = ($fileinfo->isDir() ? 'rmdir' : 'unlink');
+        $remove($fileinfo->getRealPath());
     }
 }
-*/

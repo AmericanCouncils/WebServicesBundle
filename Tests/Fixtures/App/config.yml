@@ -38,7 +38,10 @@ jms_serializer:
         auto_detection: true
 
 ac_web_services:
-    #serializable_formats: ['json','xml','yml']
+    serializer:
+        allow_deserialize_into_target: true
+        #enable_form_deserialization: true
+        #serializable_formats: ['json','xml','yml']
     response_format_headers:
         yml:
             'Content-Type': 'text/x-yaml; charset=UTF-8'

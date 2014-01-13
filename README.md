@@ -13,40 +13,66 @@ This bundle provides generic api workflow tools for developing RESTful apis.
 * Optionally include response data as part of the outgoing response
 * By default handles xml, json, jsonp and yml responses
 * Easily convert validation errors to useful API responses
+* Easil serialize incoming data into existing objects
 
-## Usage ##
+## Installation ##
 
-Generally speaking, you configure some general behavior for your API by setting values that apply to certain routes.  Here's example config:
+1. require `"ac/web-services-bundle": "~0.2.0"` in your `composer.json`
+2. update it w/ composer: `composer update ac/web-services-bundle`
+3. enable in your `AppKernel.php`:
 
-```yaml
-ac_web_services:
+    ```php
+    use AC\WebServicesBundle\ACWebServicesBundle;
 
-    #defaults for content-type header are provided per response format, but you may include custom headers as well
-    response_format_headers:
-        json:
-            'content-type': 'application/json'
-        jsonp:
-            'content-type': 'text/javascript'
-    paths:
-        '{^/api/override}':
-            include_exception_data: false           #very helpful for debugging
-            include_response_data: false            #easier for some clients to parse
-            allow_code_suppression: false           #for clients that don't really respect http and intercept errors
-            allow_jsonp: false                      #if you really have to...
-            default_response_format: json           
-            http_exception_map:                     #you may want/need to convert some exceptions for the end clients
-                'AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\BundleException': { code: 403, message: 'Custom error message' }
-            additional_headers:                     #just because... maybe it'll be useful?
-                'x-custom-acwebservices': 'foo-bar-baz'
-        '{^/api/}':
-            include_exception_data: true
-            include_response_data: true
-            allow_code_suppression: true
-            allow_jsonp: true
-            default_response_format: json
-```
+    //...
 
-When a request matches a configured path, an event subscriber is registered with the relevant configuration.  This subscriber fires extra api events, similar to the kernel events.  From your controllers you can return raw data structures, which may include objects configured for serialization via the `JMSSerializerBundle`.  Information returned from a controller will automatically be serialized into the requested data transfer format by the `serializer` service.
+    public function getBundles()
+    {
+        //...
+        $bundles = array(
+            //...
+            new ACWebServicesBundle()
+            //...
+        );
+        //....
+    }
+    ```
+
+4. Configure the bundle in your `app/config/config.yml`:
+
+    This is an example configuration block.  All sections are optional and explained in more detail in subsequent sections.
+
+    ```yml
+    ac_web_services:
+        serializer:
+            allow_deserialize_into_target: true
+        response_format_headers:
+            yml:
+                'Content-Type': 'text/x-yaml; charset=UTF-8'
+            csv:
+                'Content-Type': 'text/csv; charset=UTF-8'
+        paths:
+            '{^/api/override}':
+                include_exception_data: false
+                include_response_data: false
+                allow_code_suppression: false
+                allow_jsonp: false
+                default_response_format: json
+            '{^/api/}':
+                include_exception_data: true
+                include_response_data: true
+                allow_code_suppression: true
+                allow_jsonp: true
+                default_response_format: json
+                http_exception_map:
+                    'AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\BundleException': { code: 403, message: 'Custom error message' }
+                additional_headers:
+                    'x-custom-acwebservices': 'foo-bar-baz'
+    ```
+
+## API Paths Configuration ##
+
+Generally speaking, you configure some general behavior for your API by setting values that apply to certain routes. When a request matches a configured path, an event subscriber is registered with the relevant configuration.  This subscriber fires extra api events, similar to the kernel events.  From your controllers you can return raw data structures, which may include objects configured for serialization via the `JMSSerializerBundle`.  Information returned from a controller will automatically be serialized into the requested data transfer format by the `serializer` service.
 
 For example:
 
@@ -59,7 +85,7 @@ For example:
         namespace MyBundle\Controller;
         use Symfony\Bundle\FrameworkBundle\Controller\Controller;
         use AC\WebServicesBundle\ServiceResponse;
-        
+
         class FooController extends Controller
         {
             public function someAction()
@@ -77,14 +103,10 @@ For example:
             "foo": "bar",
             "baz": 23
         }
-        
+
 > Note that changing the `_format` parameter to `xml` or `yml` will return the data structure in those formats as well.
 
 > Note: If the `_format` parameter is absent, a default format wil be returned, which is usually `json`.
-
-### Configuration ###
-
-This is an brief description of all configuration options provided by the bundle, more detailed descriptions are given below.
 
 ### Response data & code suppression ###
 
@@ -128,13 +150,9 @@ Exceptions return the response data structure described above, for example:
         }
     }
 
-#### ValidationException ####
-
-    TODO: document ValidationException, see https://github.com/AmericanCouncils/WebServicesBundle/issues/3
-
 ### Events ###
 
-When handling api requests, the bundle fires a few extra events for all API requests.  These are useful hooks for triggering other 
+When handling api requests, the bundle fires a few extra events for all API requests.  These are useful hooks for triggering other
 functionality, such as logging or metrics gathering, that should apply to all API service routes.  The events fired include:
 
 * `webservice.request` - When an API request is initiated, and has successfully been matched to a controller
@@ -145,6 +163,34 @@ functionality, such as logging or metrics gathering, that should apply to all AP
 You can register a listener service for any of these events with the `ac.webservice.listener` container tag, or register
 subscribers to multiple events via the `ac.webservice.subscriber` tag.
 
-### Services ###
 
-    TODO: document extra JMS stuff that allows serializing into objects
+### ValidationException ###
+
+    TODO: document ValidationException, see https://github.com/AmericanCouncils/WebServicesBundle/issues/3
+
+## Serialization Extras ##
+
+If `serializer.allow_deserialize_into_target` is configured to `true`, some extra services will be registered that allow serialization into
+pre-existing objects.  Here is some example usage from a controller:
+
+```php
+use AC\WebServicesBundle\Serializer\DeserializationContext;
+use AC\WebServicesBundle\ServiceResponse;
+
+//...
+
+public function userUpdateAction(Request $req)
+{
+    $user = //... fetch pre-existing user however you do that
+    $serializer = $this->container->get('serializer');
+    $context = DeserializationContext::create()
+        ->setTarget($user)
+        ->setSerializeNested(true)
+    ;
+
+    //we'll assume the input is json for documentation purposes
+    $modifiedUser = $serializer->deserialize($req->getContent(), get_class($user), 'json', $context);
+
+    return ServiceResponse::create($modifiedUser);
+}
+```
