@@ -74,7 +74,10 @@ class Controllers extends Controller
      **/
     public function apiGetPeopleWithTemplates()
     {
-        return ServiceResponse::create(array('people' => $this->getPeople()), 200)
+        return ServiceResponse::create(array('people' => array(
+            new Person('John', 86),
+            new Person('Juan', 68)
+        )), 200)
             ->setTemplateForFormat('FixtureBundle::people.html.twig', array('html','xhtml'))
             ->setTemplateForFormat('FixtureBundle::people.csv.twig', 'csv')
         ;
@@ -85,7 +88,10 @@ class Controllers extends Controller
      **/
     public function apiGetSerializedPeople()
     {
-        return ServiceResponse::create(array('people' => $this->getPeople()));
+        return ServiceResponse::create(array('people' => array(
+            new Person('John', 86),
+            new Person('Juan', 68)
+        )));
     }
 
     /**
@@ -95,7 +101,10 @@ class Controllers extends Controller
     {
         $serializerContext = SerializationContext::create()->setGroups(array('overview'));
 
-        return ServiceResponse::create(array('people' => $this->getPeople()), 200, array(), $serializerContext);
+        return ServiceResponse::create(array('people' => array(
+            new Person('John', 86),
+            new Person('Juan', 68)
+        )), 200, array(), $serializerContext);
     }
 
     /**
@@ -106,7 +115,6 @@ class Controllers extends Controller
      **/
     public function apiSimpleModifyPerson(Request $request)
     {
-        // var_dump($this->get("ac_web_services.initialized_object_constructor"));
         $existingPerson = new Person('John', 86);
 
         $serializer = $this->container->get('serializer');
@@ -125,33 +133,13 @@ class Controllers extends Controller
     }
 
     /**
-     * @Route("/api/people/complex/{id}.{_format}", defaults={"_format" = "json"})
+     * @Route("/api/negotiation/person")
      * @Method({"POST", "PUT"})
-     **/
-    public function apiComplexModifyPerson()
+     */
+    public function apiDecodeIncomingPerson(Request $req)
     {
-        $existingPerson = new Person('John', 86);
-        $existingPerson->setOtherFriends(array(
-            new Person('Chris', 84),
-            new Person('David', 85),
-            new Person('Evan', 86)
-        ));
+        $data = $this->decodeRequest('AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\Model\Person');
 
-        $modifiedPerson = $serializer->deserialize(
-            $request->getContent(),
-            'AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\Model\Person',
-            'json',
-            DeserializationContext::create()->setTarget($existingPerson)
-        );
-
-        return new ServiceResponse(array('person' => $modifiedPerson));
-    }
-
-    private function getPeople()
-    {
-        return array(
-            new Person('John', 86),
-            new Person('Juan', 68)
-        );
+        return new ServiceResponse(array('person' => $data));
     }
 }

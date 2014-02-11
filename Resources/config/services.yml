@@ -1,0 +1,22 @@
+services:
+    # handles API requests that match based on the app configuration
+    ac_web_services.kernel_listeners:
+        class: AC\WebServicesBundle\EventListener\WebServiceSubscriber
+        arguments:
+            - @service_container
+            - %ac_web_services.response_format_headers%
+            - %ac_web_services.path_config%
+            - %ac_web_services.serializable_formats%
+        tags:
+            -  { name: kernel.event_listener, event: kernel.request, method: onKernelEarlyRequest, priority: 255 }
+            -  { name: kernel.event_listener, event: kernel.request, method: onKernelLateRequest, priority: -255 }
+
+    ac_web_services.negotiator:
+        class: AC\WebServicesBundle\Negotiator
+        arguments:
+            - %ac_web_services.negotiation.input_format_types%
+            - %ac_web_services.negotiation.response_format_priorities%
+            - %ac_web_services.negotiation.response_language_priorities%
+            - %ac_web_services.negotiation.response_charset_priorities%
+            - %ac_web_services.negotiation.response_encoding_priorities%
+            - %ac_web_services.negotiation.response_additional_negotiation_formats%

@@ -30,7 +30,6 @@ class Group
     public function setOwner($owner) {$this->owner = $owner;}
     public function getOwner() {return $this->owner;}
 
-
     /**
      * @JMS\Type("array<AC\WebservicesBundle\Tests\Fixtures\FixtureBundle\Model\Person>")
      * @JMS\SerializedName("members")
