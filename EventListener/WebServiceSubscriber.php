@@ -344,6 +344,9 @@ class WebServiceSubscriber implements EventSubscriberInterface
                 //var_dump(sprintf("Negotiated [%s], using [%s]", $cfg['http_response_format'], $cfg['default_response_format']));
                 $outgoingFormat = $cfg['default_response_format'];
                 $content = $this->container->get('serializer')->serialize($data, $cfg['default_response_format'], $serializationContext);
+                if ($content === FALSE) {
+                    throw new \DomainException("Couldn't serialize content, JSON error: " . json_last_error_msg());
+                }
             }
 
             //otherwise we don't know what to do with this response data...
