@@ -6,6 +6,9 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Input\StringInput;
 use Symfony\Component\Console\Output\NullOutput;
+use Symfony\Component\Security\Core\Authentication\Token\PreAuthenticatedToken;
+
+use \Mockery as m;
 
 /**
  * This is a base integration test case that you can use for your own tests.
@@ -13,6 +16,35 @@ use Symfony\Component\Console\Output\NullOutput;
  **/
 abstract class TestCase extends WebTestCase
 {
+    private static $fixtures = array();
+
+    /**
+     * Override from child class to return a CachedFixture
+     */
+    protected function getFixtureClass()
+    {
+        return null;
+    }
+
+    public function setUp()
+    {
+        parent::setUp();
+
+        $this->dieOnException("fixture loading", function() {
+            $c = $this->getFixtureClass();
+            if (is_null($c)) {
+                self::$fixtures[$c] = null;
+            }
+            if (!array_key_exists($c, self::$fixtures)) {
+                self::$fixtures[$c] = new $c;
+            }
+            if (!is_null(self::$fixtures[$c])) {
+                $client = $this->getClient();
+                self::$fixtures[$c]->loadInto($client->getContainer());
+            }
+        });
+    }
+
     /**
      * Shortcut to get a new client
      */
@@ -53,6 +85,16 @@ abstract class TestCase extends WebTestCase
         $server['SERVER_NAME'] = '127.0.0.1';
 
         $client = $this->getClient();
+
+        if (isset($options['auth'])) {
+            $user = $options['auth']['user'];
+            $roles = array('ROLE_USER');
+            if (isset($options['auth']['roles'])) {
+                $roles = $options['auth']['roles'];
+            }
+            $this->fakeUserAuth($client, $user, $roles);
+        }
+
         $client->request($method, $uri, $params, $files, $server, $content, $changeHist);
         $response = $client->getResponse();
 
@@ -94,6 +136,21 @@ abstract class TestCase extends WebTestCase
      */
     protected function callJsonApi($method, $uri, $options = array())
     {
+        if (isset($options['content'])) {
+            if (
+                !isset($options['server']) ||
+                !isset($options['server']['CONTENT_TYPE'])
+            ) {
+                $options['server']['CONTENT_TYPE'] = 'application/json';
+            }
+            if (
+                is_array($options['content']) &&
+                $options['server']['CONTENT_TYPE'] == 'application/json')
+            {
+                $options['content'] = json_encode($options['content']);
+            }
+        }
+
         $res = $this->callApi($method, $uri, $options);
         $ctype = $res->headers->get('Content-Type');
         if ($ctype != "application/json") {
@@ -104,6 +161,25 @@ abstract class TestCase extends WebTestCase
             $this->fail("Couldn't decode response, JSON error: " . json_last_error_msg());
         }
         return $json;
+    }
+
+    protected function dieOnException($desc, $fn)
+    {
+        try {
+            call_user_func($fn);
+        } catch (\Exception $e) {
+            print "\n\nFailure in $desc\n";
+            print $e;
+            print $e->getTraceAsString();
+            die(1);
+        }
+    }
+
+    protected function assertIdsMatch($ids, $data)
+    {
+        $dataIds = array_map(function($x) { return $x['id']; }, $data);
+        sort($dataIds);
+        $this->assertEquals($ids, $dataIds);
     }
 
     private function cleanTrace($trace)
@@ -124,5 +200,20 @@ abstract class TestCase extends WebTestCase
             }
         );
         return $trace;
+    }
+
+    private function fakeUserAuth($client, $user, $roles)
+    {
+        # TODO: Need to merge the user into existing persistence context
+        # Right now this has to be done manually from SUT, which is annoying
+        # But we can't do it from here, because how do we know which persistence engine?
+        $c = $client->getContainer();
+        $token = new PreAuthenticatedToken($user, array(), 'mock', $roles);
+        $c->set('security.context', m::mock(
+            $c->get('security.context'),
+            [
+                'getToken' => $token
+            ]
+        ));
     }
 }

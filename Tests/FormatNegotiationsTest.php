@@ -9,12 +9,11 @@ class FormatNegotiationTest extends TestCase
     public function testNegotiateRequestFormat()
     {
         //send json, expect json back
-        $return = $this->callJsonApi( 'PUT', '/api/negotiation/person', array(
-            'server' => array('CONTENT_TYPE' => 'application/json'),
-            'content' => json_encode(array(
+        $return = $this->callJsonApi('PUT', '/api/negotiation/person', array(
+            'content' => array(
                 'age' => 27,
                 'name' => 'Foobert'
-            ))
+            )
         ));
 
         $this->assertSame(27, $return['person']['age']);

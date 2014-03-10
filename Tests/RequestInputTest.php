@@ -12,14 +12,8 @@ class RequestInputTest extends TestCase
 
     public function testSimpleIncomingData()
     {
-        // $this->markTestSkipped();
-        $data = array(
-            'age' => 27
-        );
-
         $returned = $this->callJsonApi('PUT', '/api/people/simple/1.json', array(
-            'server' => array('CONTENT_TYPE' => 'application/json'),
-            'content' => json_encode($data)
+            'content' => array('age' => 27)
         ));
 
         $this->assertSame(27, $returned['person']['age']);
