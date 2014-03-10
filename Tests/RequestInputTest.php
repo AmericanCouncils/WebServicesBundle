@@ -17,17 +17,11 @@ class RequestInputTest extends TestCase
             'age' => 27
         );
 
-        $res = $this->callApi(
-            'PUT',
-            '/api/people/simple/1.json',
-            array(),
-            array(),
-            array('CONTENT_TYPE' => 'application/json'),
-            json_encode($data)
-        );
-        $returned = json_decode($res->getContent(), true);
+        $returned = $this->callJsonApi('PUT', '/api/people/simple/1.json', array(
+            'server' => array('CONTENT_TYPE' => 'application/json'),
+            'content' => json_encode($data)
+        ));
 
-        $this->assertSame(200, $res->getStatusCode());
         $this->assertSame(27, $returned['person']['age']);
         $this->assertSame('John', $returned['person']['name']);
     }

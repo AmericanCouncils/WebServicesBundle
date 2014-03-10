@@ -9,21 +9,14 @@ class FormatNegotiationTest extends TestCase
     public function testNegotiateRequestFormat()
     {
         //send json, expect json back
-        $res = $this->callApi(
-            'PUT',
-            '/api/negotiation/person',
-            array(),
-            array(),
-            array('CONTENT_TYPE' => 'application/json'),
-            json_encode(array(
+        $return = $this->callJsonApi( 'PUT', '/api/negotiation/person', array(
+            'server' => array('CONTENT_TYPE' => 'application/json'),
+            'content' => json_encode(array(
                 'age' => 27,
                 'name' => 'Foobert'
             ))
-        );
+        ));
 
-        $this->assertSame(200, $res->getStatusCode());
-        $this->assertSame('application/json', $res->headers->get('Content-Type'));
-        $return = json_decode($res->getContent(), true);
         $this->assertSame(27, $return['person']['age']);
         $this->assertSame('Foobert', $return['person']['name']);
 
@@ -36,18 +29,11 @@ class FormatNegotiationTest extends TestCase
     <age>27</age>
 </entry>
 EOT;
-        $res = $this->callApi(
-            'PUT',
-            '/api/negotiation/person',
-            array(),
-            array(),
-            array('CONTENT_TYPE' => 'application/xml'),
-            $content
-        );
+        $return = $this->callJsonApi('PUT', '/api/negotiation/person', array(
+            'server' => array('CONTENT_TYPE' => 'application/xml'),
+            'content' => $content
+        ));
 
-        $this->assertSame(200, $res->getStatusCode());
-        $this->assertSame('application/json', $res->headers->get('Content-Type'));
-        $return = json_decode($res->getContent(), true);
         $this->assertSame(27, $return['person']['age']);
         $this->assertSame('Foobert', $return['person']['name']);
     }
@@ -55,17 +41,15 @@ EOT;
     public function testNegotiateResponseFormat()
     {
         //accept xml header highest priority
-        $res = $this->callApi('GET', '/api/override/success', array(), array(), array(
+        $res = $this->callApi('GET', '/api/override/success', array("server" => array(
             'HTTP_ACCEPT' => 'application/xhtml+xml;q=0.9,application/xml,*/*;q=0.8'
-        ));
-        $this->assertSame(200, $res->getStatusCode());
+        )));
         $this->assertSame('application/xml', $res->headers->get('Content-Type'));
 
         //accept yaml header first priority
-        $res = $this->callApi('GET', '/api/override/success', array(), array(), array(
+        $res = $this->callApi('GET', '/api/override/success', array("server" => array(
             'HTTP_ACCEPT' => 'application/xhtml+xml;q=0.9,application/yaml,*/*;q=0.8'
-        ));
-        $this->assertSame(200, $res->getStatusCode());
+        )));
         $this->assertSame('text/x-yaml; charset=UTF-8', $res->headers->get('Content-Type'));
     }
 }

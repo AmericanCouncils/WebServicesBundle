@@ -31,7 +31,7 @@ class FormDeserializationTest extends TestCase
 
     public function testDeserializeFormData()
     {
-        $serializer = $this->getContainer()->get('serializer');
+        $serializer = $this->getClient()->getContainer()->get('serializer');
 
         $person = $serializer->deserialize($this->getTestData(), 'AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\Model\Person', 'form');
 
@@ -49,12 +49,9 @@ class FormDeserializationTest extends TestCase
     public function testApiDecodeFormSubmission()
     {
         $data = $this->getTestData();
-
-        $res = $this->callApi('POST', '/api/negotiation/person', $data);
-
-        $this->assertSame(200, $res->getStatusCode());
-        $json = json_decode($res->getContent(), true);
-
+        $json = $this->callJsonApi('POST', '/api/negotiation/person', array(
+            'params' => $data
+        ));
         $this->assertEquals($data, $json['person']);
     }
 }
