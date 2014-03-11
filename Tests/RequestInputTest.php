@@ -12,22 +12,10 @@ class RequestInputTest extends TestCase
 
     public function testSimpleIncomingData()
     {
-        // $this->markTestSkipped();
-        $data = array(
-            'age' => 27
-        );
+        $returned = $this->callJsonApi('PUT', '/api/people/simple/1.json', array(
+            'content' => array('age' => 27)
+        ));
 
-        $res = $this->callApi(
-            'PUT',
-            '/api/people/simple/1.json',
-            array(),
-            array(),
-            array('CONTENT_TYPE' => 'application/json'),
-            json_encode($data)
-        );
-        $returned = json_decode($res->getContent(), true);
-
-        $this->assertSame(200, $res->getStatusCode());
         $this->assertSame(27, $returned['person']['age']);
         $this->assertSame('John', $returned['person']['name']);
     }

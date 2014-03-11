@@ -11,7 +11,9 @@ class InitializedObjectConstructorTest extends TestCase
 {
     public function setUp()
     {
-        $this->serializer = $this->getContainer()->get('serializer');
+        parent::setUp();
+
+        $this->serializer = $this->getClient()->getContainer()->get('serializer');
         $this->context = DeserializationContext::create();
         $this->allen = new Person("Allen", 10, 1);
         $this->barry = new Person("Barry", 11, 2);
