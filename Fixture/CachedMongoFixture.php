@@ -12,7 +12,7 @@ abstract class CachedMongoFixture extends CachedFixture
         $this->objMan = $container->get('doctrine_mongodb')->getManager();
 
         $databases = [];
-        foreach ($this->objMan->getMetadataFactory->getAllMetadata() as $m) {
+        foreach ($this->objMan->getMetadataFactory()->getAllMetadata() as $m) {
             if ($m->isMappedSuperclass) { continue; }
             $db = $this->objMan->getDocumentDatabase($m->name);
             $databases[$db->getName()] = $db;
@@ -31,7 +31,7 @@ abstract class CachedMongoFixture extends CachedFixture
                 ]);
             }
         } else {
-            $this->fixture();
+            $this->execFixture();
             $this->templateLoaded = true;
 
             foreach ($databases as $db) {
