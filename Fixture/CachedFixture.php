@@ -1,16 +1,17 @@
 <?php
 
-namespace AC\WebServicesBundle;
+namespace AC\WebServicesBundle\Fixture;
 
 use \Faker;
-
-class NullStandIn
-{
-}
 
 abstract class CachedFixture
 {
     private $faker;
+    private $currentModel;
+    private $currentObject;
+    private $currentGenerateIndex;
+    private $currentGenerateCount;
+    private $generated;
 
     abstract public function loadInto($container);
     abstract protected function getFixtureObjectManager();
@@ -127,11 +128,25 @@ abstract class CachedFixture
 
     protected function withLoadingMessage($msg, $func)
     {
-        print "\nCachedFixture: " . ucfirst($msg) . ", please wait...";
+        $clsName = get_called_class();
+        print "\n$clsName: " . ucfirst($msg) . ", please wait...";
         ob_flush();
         $func();
-        print "\n";
+        print " OK!\n";
         ob_flush();
     }
 
+    protected function execFixture()
+    {
+        $this->withLoadingMessage("building fixture template",
+            function () {
+                $this->currentModel = null;
+                $this->currentObject = null;
+                $this->currentGenerateIndex = null;
+                $this->currentGenerateCount = null;
+                $this->generated = [];
+                $this->fixture();
+            }
+        );
+    }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace AC\WebServicesBundle;
+namespace AC\WebServicesBundle\Fixture;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\PDOSqlite\Driver as SqliteDriver;
@@ -18,11 +18,14 @@ abstract class CachedSqliteFixture extends CachedFixture
     private $migCodeFiles = null;
     private $objMan = null;
 
-
     final public function loadInto($container)
     {
-        if (!is_dir(".tmp")) { mkdir(".tmp"); }
-        if (is_null($this->baseSchemaPath)) { $this->setupSchemaTemplate(); }
+        if (!is_dir(".tmp")) {
+            mkdir(".tmp");
+        }
+        if (is_null($this->baseSchemaPath)) {
+            $this->setupSchemaTemplate();
+        }
         if (is_null($this->dbTemplatePath)) {
             $this->setupFixtureTemplate($container->get('doctrine')->getManager());
         }
@@ -97,12 +100,6 @@ abstract class CachedSqliteFixture extends CachedFixture
         });
     }
 
-    private $currentModel;
-    private $currentObject;
-    private $currentGenerateIndex;
-    private $currentGenerateCount;
-    private $generated;
-
     private function setupFixtureTemplate($mainEM)
     {
         $clsName = str_replace("\\", "__", get_called_class());
@@ -119,16 +116,7 @@ abstract class CachedSqliteFixture extends CachedFixture
                 $mainEM->getConfiguration(),
                 $mainEM->getEventManager()
             );
-            $this->withLoadingMessage("building fixture template $clsName",
-                function () {
-                    $this->currentModel = null;
-                    $this->currentObject = null;
-                    $this->currentGenerateIndex = null;
-                    $this->currentGenerateCount = null;
-                    $this->generated = [];
-                    $this->fixture();
-                }
-            );
+            $this->execFixture();
             $this->objMan = null;
         } catch (\Exception $e) {
             if (file_exists($this->dbTemplatePath)) {
