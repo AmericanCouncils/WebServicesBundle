@@ -6,8 +6,20 @@ abstract class CachedMongoFixture extends CachedFixture
 {
     private $templateLoaded = false;
     private $objMan = null;
+    private $collCopyMongo;
 
-    final public function loadInto($container)
+    public function __construct()
+    {
+        parent::__construct();
+
+        $this->collCopyMongo = new \MongoCode(
+            "function(src, tgt) {
+                db[src].find().forEach(function(i){db[tgt].insert(i)})
+            }"
+        );
+    }
+
+    final protected function loadImpl($container)
     {
         $this->objMan = $container->get('doctrine_mongodb')->getManager();
 
@@ -18,28 +30,37 @@ abstract class CachedMongoFixture extends CachedFixture
             $databases[$db->getName()] = $db;
         }
 
-        foreach ($databases as $db) {
-            $db->drop();
-        }
-
-        if ($this->templateLoaded) {
+        $savingTemplates = false;
+        if (!$this->templateLoaded) {
             foreach ($databases as $db) {
-                $db->command([
-                    "copydb" => 1,
-                    "fromdb" => $db->getName() . "___TEMPLATE",
-                    "todb" => $db->getName()
-                ]);
+                $db->drop();
             }
-        } else {
             $this->execFixture();
             $this->templateLoaded = true;
+            $savingTemplates = true;
+        }
 
-            foreach ($databases as $db) {
-                $db->command([
-                    "copydb" => 1,
-                    "fromdb" => $db->getName(),
-                    "todb" => $db->getName() . "___TEMPLATE"
-                ]);
+        foreach ($databases as $db) {
+            $srcPrefix = "TEMPLATE__";
+            $tgtPrefix = "";
+            if ($savingTemplates) {
+                list($srcPrefix, $tgtPrefix) = [$tgtPrefix, $srcPrefix];
+            }
+
+            $collNames = $db->getMongoDB()->getCollectionNames();
+
+            foreach ($collNames as $coll) {
+                if (strpos($coll, "TEMPLATE__") === 0) {
+                    continue;
+                }
+                $src = $srcPrefix . $coll;
+                $tgt = $tgtPrefix . $coll;
+
+                if (in_array($tgt, $collNames)) {
+                    $db->getMongoDB()->selectCollection($tgt)->drop();
+                }
+
+                $db->getMongoDB()->execute($this->collCopyMongo, [$src, $tgt]);
             }
         }
 
@@ -49,5 +70,10 @@ abstract class CachedMongoFixture extends CachedFixture
     final protected function getFixtureObjectManager()
     {
         return $this->objMan;
+    }
+
+    final protected function getNamespaceAliases($objMan)
+    {
+        return $objMan->getConfiguration()->getDocumentNamespaces();
     }
 }

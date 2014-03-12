@@ -16,7 +16,8 @@ use \Mockery as m;
  **/
 abstract class TestCase extends WebTestCase
 {
-    private static $fixtures = array();
+    private static $fixtures = [];
+    protected $fixtureData = [];
 
     /**
      * Override from child class to return a CachedFixture
@@ -32,15 +33,16 @@ abstract class TestCase extends WebTestCase
 
         $this->dieOnException("fixture loading", function() {
             $c = $this->getFixtureClass();
-            if (is_null($c)) {
-                self::$fixtures[$c] = null;
-            }
+            if (is_null($c)) { return; }
             if (!array_key_exists($c, self::$fixtures)) {
                 self::$fixtures[$c] = new $c;
             }
             if (!is_null(self::$fixtures[$c])) {
                 $client = $this->getClient();
-                self::$fixtures[$c]->loadInto($client->getContainer());
+                $g = self::$fixtures[$c]->loadInto($client->getContainer());
+                $this->fixtureData = $g;
+            } else {
+                $this->fixtureData = [];
             }
         });
     }
@@ -50,10 +52,10 @@ abstract class TestCase extends WebTestCase
      */
     protected function getClient()
     {
-        return static::createClient(array(
+        return static::createClient([
             'environment' => 'test',
             'debug' => true
-        ));
+        ]);
     }
 
     /**
@@ -74,11 +76,11 @@ abstract class TestCase extends WebTestCase
      *
      * Will fail unless the response's status code equals 200 (or a supplied expectedCode option).
      */
-    protected function callApi($method, $uri, $options = array())
+    protected function callApi($method, $uri, $options = [])
     {
-        $params = isset($options['params']) ? $options['params'] : array();
-        $files = isset($options['files']) ? $options['files'] : array();
-        $server = isset($options['server']) ? $options['server'] : array();
+        $params = isset($options['params']) ? $options['params'] : [];
+        $files = isset($options['files']) ? $options['files'] : [];
+        $server = isset($options['server']) ? $options['server'] : [];
         $content = isset($options['content']) ? $options['content'] : null;
         $changeHist = isset($options['changeHistory']) ? $options['changeHistory'] : true;
 
@@ -88,7 +90,7 @@ abstract class TestCase extends WebTestCase
 
         if (isset($options['auth'])) {
             $user = $options['auth']['user'];
-            $roles = array('ROLE_USER');
+            $roles = ['ROLE_USER'];
             if (isset($options['auth']['roles'])) {
                 $roles = $options['auth']['roles'];
             }
@@ -134,7 +136,7 @@ abstract class TestCase extends WebTestCase
      *
      * Returns the JSON data.
      */
-    protected function callJsonApi($method, $uri, $options = array())
+    protected function callJsonApi($method, $uri, $options = [])
     {
         if (isset($options['content'])) {
             if (
@@ -208,7 +210,7 @@ abstract class TestCase extends WebTestCase
         # Right now this has to be done manually from SUT, which is annoying
         # But we can't do it from here, because how do we know which persistence engine?
         $c = $client->getContainer();
-        $token = new PreAuthenticatedToken($user, array(), 'mock', $roles);
+        $token = new PreAuthenticatedToken($user, [], 'mock', $roles);
         $c->set('security.context', m::mock(
             $c->get('security.context'),
             [

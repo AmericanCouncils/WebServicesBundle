@@ -18,7 +18,7 @@ abstract class CachedSqliteFixture extends CachedFixture
     private $migCodeFiles = null;
     private $objMan = null;
 
-    final public function loadInto($container)
+    final protected function loadImpl($container)
     {
         if (!is_dir(".tmp")) {
             mkdir(".tmp");
@@ -124,6 +124,11 @@ abstract class CachedSqliteFixture extends CachedFixture
             }
             throw $e;
         }
+    }
+
+    final protected function getNamespaceAliases($objMan)
+    {
+        return $objMan->getConfiguration()->getEntityNamespaces();
     }
 
     private function migrationCodeFiles()

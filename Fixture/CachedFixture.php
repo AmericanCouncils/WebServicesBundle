@@ -13,14 +13,21 @@ abstract class CachedFixture
     private $currentGenerateCount;
     private $generated;
 
-    abstract public function loadInto($container);
+    abstract protected function loadImpl($container);
     abstract protected function getFixtureObjectManager();
+    abstract protected function getNamespaceAliases($objMan);
 
     abstract protected function fixture();
 
     public function __construct()
     {
         $this->faker = Faker\Factory::create();
+    }
+
+    public function loadInto($container)
+    {
+        $this->loadImpl($container);
+        return $this->generated;
     }
 
     protected function fake()
@@ -72,13 +79,11 @@ abstract class CachedFixture
     private function retrieveFromGenerated($model, $fn)
     {
         $objMan = $this->getFixtureObjectManager();
-        $repo = $objMan->getRepository($model);
-        $clsName = $repo->getClassName();
-        if (!isset($this->generated[$clsName])) {
+        if (!isset($this->generated[$model])) {
             throw new \Exception("You haven't generated any $model yet in this fixture");
         }
 
-        $objects = $this->generated[$clsName];
+        $objects = $this->generated[$model];
         $obj = call_user_func(\Closure::bind($fn, $this), $this, $objects);
 
         $objMan->refresh($obj);
@@ -89,36 +94,39 @@ abstract class CachedFixture
     {
         $this->currentModel = $model;
         $objMan = $this->getFixtureObjectManager();
-        $repo = $objMan->getRepository($model);
+        $clsName = $this->removeNamespaceAlias($objMan, $model);
 
         $this->currentGenerateCount = $n;
         for ($i = 0; $i < $n; ++$i) {
-            $clsName = $repo->getClassName();
             $this->currentObject = new $clsName;
             $this->currentGenerateIndex = $i;
+
             foreach ($fields as $key => $field) {
                 if (!is_callable($field)) {
                     throw new \Exception(
-                        "Can't use a non-function for fixture $clsName field $key"
+                        "Can't use a non-function for fixture $model field $key"
                     );
                 }
                 mt_srand(hexdec(substr(md5("$clsName-$key-$i"), 0, 8)));
                 $value = call_user_func($field, $this);
                 if (is_null($value)) {
                     throw new \Exception(
-                        "Got null for $clsName $key, maybe you forgot 'return' or 'reallyNull()'"
+                        "Got null for $model $key, maybe you forgot 'return' or 'reallyNull()'"
                     );
                 } elseif ($value instanceof NullStandIn) {
                     $value = null;
                 }
                 call_user_func([$this->currentObject, "set" . ucfirst($key)], $value);
             }
+
             $objMan->persist($this->currentObject);
             $objMan->flush();
-            while ($clsName !== FALSE) {
-                $this->generated[$clsName][] = $this->currentObject;
-                $clsName = get_parent_class($clsName);
+
+            $this->generated[$model][] = $this->currentObject;
+            foreach ($this->getModelAncestors($objMan, $model) as $a) {
+                $this->generated[$a][] = $this->currentObject;
             }
+
             $this->currentObject = null;
             $this->currentGenerateIndex = null;
         }
@@ -148,5 +156,48 @@ abstract class CachedFixture
                 $this->fixture();
             }
         );
+    }
+
+    private function removeNamespaceAlias($objMan, $cls)
+    {
+        if (strpos($cls, ':') !== false) {
+            list($nsAlias, $shortCls) = explode(':', $cls);
+            $aliases = $this->getNamespaceAliases($objMan);
+            if (isset($aliases[$nsAlias])) {
+                return $aliases[$nsAlias] . '\\' . $shortCls;
+            } else {
+                throw new \LogicException("Unknown model namespace $nsAlias");
+            }
+        }
+
+        return $cls;
+    }
+
+    private function getModelAncestors($objMan, $cls)
+    {
+        $aliases = null;
+        if (strpos($cls, ':') !== false) {
+            $cls = $this->removeNamespaceAlias($objMan, $cls);
+            $aliases = $this->getNamespaceAliases($objMan);
+        }
+        $r = [];
+
+        while (true) {
+            $cls = get_parent_class($cls);
+            if ($cls === false) { break; }
+            $name = $cls;
+            if (!is_null($aliases)) {
+                foreach ($aliases as $alias => $fullNs) {
+                    $fullNs = trim($fullNs, '\\');
+                    if (strpos($cls, $fullNs) === 0) {
+                        $name = str_replace($fullNs . '\\', $alias . ':', $cls);
+                        break;
+                    }
+                }
+            }
+            $r[] = $name;
+        }
+
+        return $r;
     }
 }
