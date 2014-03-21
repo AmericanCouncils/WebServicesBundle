@@ -4,9 +4,6 @@ namespace AC\WebServicesBundle\Fixture;
 
 use \Faker;
 
-# FIXME Ack, ORM specific!!! Make usage of this based on abstract method
-use Doctrine\ORM\Mapping\ClassMetadataInfo;
-
 abstract class CachedFixture
 {
     private $faker;
@@ -16,6 +13,7 @@ abstract class CachedFixture
     abstract protected function loadImpl($container);
     abstract protected function getFixtureObjectManager();
     abstract protected function getNamespaceAliases($objMan);
+    protected function prePersist($obj) {}
 
     abstract protected function fixture();
 
@@ -99,21 +97,7 @@ abstract class CachedFixture
         }
 
         foreach ($objs as $obj) {
-            $meta = $objMan->getClassMetadata(get_class($obj));
-            foreach ($meta->associationMappings as $field => $assoc) {
-                # FIXME: ORM specific!
-                $mappedBy = $assoc['mappedBy'];
-                if (is_null($mappedBy)) { continue; }
-                $data = call_user_func([$obj, "get" . ucfirst($field)]);
-                if (is_null($data)) { continue; }
-                foreach ($data as $subObj) {
-                    $mapping = call_user_func([$subObj, "get" . ucfirst($mappedBy)]);
-                    if (is_null($mapping)) {
-                        call_user_func([$subObj, "set" . ucfirst($mappedBy)], $obj);
-                        $objMan->persist($subObj);
-                    }
-                }
-            }
+            $this->prePersist($obj);
 
             $this->generated[$model][] = $obj;
             foreach ($this->getModelAncestors($objMan, $model) as $a) {
