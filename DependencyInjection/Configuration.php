@@ -27,6 +27,7 @@ class Configuration implements ConfigurationInterface
 
         $rootNode
             ->children()
+                ->scalarNode('default_fixture_class')->defaultNull()->end()
                 ->variableNode('serializable_formats')
                     ->defaultValue($def['serializable_formats'])
                 ->end()

@@ -123,10 +123,10 @@ abstract class CachedFixture
     {
         $clsName = get_called_class();
         print "\n$clsName: " . ucfirst($msg) . ", please wait...";
-        ob_flush();
+        if (ob_get_level() > 0) { ob_flush(); }
         $func();
         print " OK!\n";
-        ob_flush();
+        if (ob_get_level() > 0) { ob_flush(); }
     }
 
     protected function execFixture()

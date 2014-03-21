@@ -3,6 +3,7 @@
 namespace AC\WebServicesBundle\Fixture;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Driver\PDOConnection;
 use Doctrine\DBAL\Driver\PDOSqlite\Driver as SqliteDriver;
 use Doctrine\DBAL\Platforms\SqlitePlatform;
 use Doctrine\DBAL\Schema\Schema;
@@ -17,10 +18,16 @@ abstract class CachedSqliteFixture extends CachedFixture
     private $baseSchemaPath = null;
     private $dbTemplatePath = null;
     private $migCodeFiles = null;
-    private $objMan = null;
+    private $templateEM = null;
 
     final protected function loadImpl($container)
     {
+        $mainEM = $container->get('doctrine')->getManager();
+        $conn = $mainEM->getConnection();
+        if (!$conn->getDatabasePlatform() instanceof SqlitePlatform) {
+            throw new \RuntimeException("Cannot load sqlite fixture into non-sqlite database");
+        }
+
         if (!is_dir(".tmp")) {
             mkdir(".tmp");
         }
@@ -28,16 +35,19 @@ abstract class CachedSqliteFixture extends CachedFixture
             $this->setupSchemaTemplate();
         }
         if (is_null($this->dbTemplatePath)) {
-            $this->setupFixtureTemplate($container->get('doctrine')->getManager());
+            $this->dbTemplatePath = $this->setupFixtureTemplate($mainEM);
         }
 
-        $dbPath = ".tmp/testing.sqlite3";
+        $dbPath = $conn->getDatabase();
+        if (!is_dir(dirname($dbPath))) {
+            mkdir(dirname($dbPath), 0777, true);
+        }
         copy($this->dbTemplatePath, $dbPath);
     }
 
     final protected function getFixtureObjectManager()
     {
-        return $this->objMan;
+        return $this->templateEM;
     }
 
     private function setupSchemaTemplate()
@@ -104,13 +114,13 @@ abstract class CachedSqliteFixture extends CachedFixture
     private function setupFixtureTemplate($mainEM)
     {
         $clsName = str_replace("\\", "__", get_called_class());
-        $this->dbTemplatePath = ".tmp/$clsName.sqlite3";
+        $templatePath = ".tmp/$clsName.sqlite3";
 
         try {
-            copy($this->baseSchemaPath, $this->dbTemplatePath);
-            $this->objMan = EntityManager::create(
+            copy($this->baseSchemaPath, $templatePath);
+            $this->templateEM = EntityManager::create(
                 $this->connectDb(
-                    $this->dbTemplatePath,
+                    $templatePath,
                     $mainEM->getConfiguration(),
                     $mainEM->getEventManager()
                 ),
@@ -118,13 +128,15 @@ abstract class CachedSqliteFixture extends CachedFixture
                 $mainEM->getEventManager()
             );
             $this->execFixture();
-            $this->objMan = null;
+            $this->templateEM = null;
         } catch (\Exception $e) {
-            if (file_exists($this->dbTemplatePath)) {
-                unlink($this->dbTemplatePath);
+            if (file_exists($templatePath)) {
+                unlink($templatePath);
             }
             throw $e;
         }
+
+        return $templatePath;
     }
 
     final protected function getNamespaceAliases($objMan)
@@ -135,7 +147,7 @@ abstract class CachedSqliteFixture extends CachedFixture
     final protected function prePersist($obj)
     {
         # Update reverse associations as needed
-        $meta = $this->objMan->getClassMetadata(get_class($obj));
+        $meta = $this->templateEM->getClassMetadata(get_class($obj));
         foreach ($meta->associationMappings as $field => $assoc) {
             $mappedBy = $assoc['mappedBy'];
             if (is_null($mappedBy)) { continue; }
@@ -145,7 +157,7 @@ abstract class CachedSqliteFixture extends CachedFixture
                 $mapping = call_user_func([$subObj, "get" . ucfirst($mappedBy)]);
                 if (is_null($mapping)) {
                     call_user_func([$subObj, "set" . ucfirst($mappedBy)], $obj);
-                    $this->objMan->persist($subObj);
+                    $this->templateEM->persist($subObj);
                 }
             }
         }
