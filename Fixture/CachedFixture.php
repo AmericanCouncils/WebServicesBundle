@@ -4,14 +4,14 @@ namespace AC\WebServicesBundle\Fixture;
 
 use \Faker;
 
+# FIXME Ack, ORM specific!!! Make usage of this based on abstract method
+use Doctrine\ORM\Mapping\ClassMetadataInfo;
+
 abstract class CachedFixture
 {
     private $faker;
-    private $currentModel;
-    private $currentObject;
-    private $currentGenerateIndex;
-    private $currentGenerateCount;
     private $generated;
+    private $descriptions;
 
     abstract protected function loadImpl($container);
     abstract protected function getFixtureObjectManager();
@@ -30,108 +30,109 @@ abstract class CachedFixture
         return $this->generated;
     }
 
-    protected function fake()
+    public function getFaker()
     {
         return $this->faker;
     }
 
-    protected function reallyNull()
-    {
-        return new NullStandIn;
-    }
-
-    protected function curObject()
-    {
-        return $this->currentObject;
-    }
-
-    protected function idx()
-    {
-        return $this->currentGenerateIndex;
-    }
-
-    protected function remaining()
-    {
-        return $this->currentGenerateCount - $this->currentGenerateIndex;
-    }
-
-    protected function fetchCorresponding($model)
-    {
-        return $this->retrieveFromGenerated($model, function($fixture, $objects) {
-            if (count($objects) > $fixture->currentGenerateCount) {
-                $curModel = $fixture->currentModel;
-                throw new \Exception(
-                    "You're not generating enough $curModel to associate with every $model"
-                );
-            }
-            $idx = $fixture->idx() % count($objects);
-            return $objects[$idx];
-        });
-    }
-
-    protected function fetchRandom($model)
-    {
-        return $this->retrieveFromGenerated($model, function($fixture, $objects) {
-            return $fixture->fake()->randomElement($objects);
-        });
-    }
-
-    private function retrieveFromGenerated($model, $fn)
+    public function getObject($model, $selectorFn)
     {
         $objMan = $this->getFixtureObjectManager();
         if (!isset($this->generated[$model])) {
-            throw new \Exception("You haven't generated any $model yet in this fixture");
+            throw new \LogicException("You haven't generated any $model yet in this fixture");
         }
 
         $objects = $this->generated[$model];
-        $obj = call_user_func(\Closure::bind($fn, $this), $this, $objects);
+        $obj = call_user_func($selectorFn, $objects);
 
         $objMan->refresh($obj);
         return $obj;
     }
 
-    protected function generate($n, $model, $fields)
+    protected function describe($model, $fields)
     {
-        $this->currentModel = $model;
+        if (isset($this->descriptions[$model])) {
+            throw new \LogicException("You have already set a description for $model");
+        }
+        if (!is_array($fields)) {
+            throw new \InvalidArgumentException(
+                "Description should be an array mapping field names to functions"
+            );
+        }
+        $this->descriptions[$model] = $fields;
+    }
+
+    public function build($n, $model)
+    {
+        if (!isset($this->descriptions[$model])) {
+            throw new \InvalidArgumentException(
+                "No such model $model described"
+            );
+        }
         $objMan = $this->getFixtureObjectManager();
-        $clsName = $this->removeNamespaceAlias($objMan, $model);
+        $cls = $this->removeNamespaceAlias($objMan, $model);
 
-        $this->currentGenerateCount = $n;
+        $objs = [];
         for ($i = 0; $i < $n; ++$i) {
-            $this->currentObject = new $clsName;
-            $this->currentGenerateIndex = $i;
+            $obj = new $cls;
+            $helper = new FixtureHelper($this, $model, $obj, $n, $i);
 
-            foreach ($fields as $key => $field) {
+            foreach ($this->descriptions[$model] as $key => $field) {
                 if (!is_callable($field)) {
-                    throw new \Exception(
+                    throw new \LogicException(
                         "Can't use a non-function for fixture $model field $key"
                     );
                 }
-                mt_srand(hexdec(substr(md5("$clsName-$key-$i"), 0, 8)));
-                $value = call_user_func($field, $this);
+                mt_srand(hexdec(substr(md5("$cls-$key-$i"), 0, 8)));
+                $value = call_user_func($field, $helper);
                 if (is_null($value)) {
-                    throw new \Exception(
+                    throw new \LogicException(
                         "Got null for $model $key, maybe you forgot 'return' or 'reallyNull()'"
                     );
                 } elseif ($value instanceof NullStandIn) {
                     $value = null;
                 }
-                call_user_func([$this->currentObject, "set" . ucfirst($key)], $value);
+                call_user_func([$obj, "set" . ucfirst($key)], $value);
             }
 
-            $objMan->persist($this->currentObject);
-            $objMan->flush();
-
-            $this->generated[$model][] = $this->currentObject;
-            foreach ($this->getModelAncestors($objMan, $model) as $a) {
-                $this->generated[$a][] = $this->currentObject;
-            }
-
-            $this->currentObject = null;
-            $this->currentGenerateIndex = null;
+            $objs[] = $obj;
         }
-        $this->currentGenerateCount = null;
-        $this->currentModel = null;
+
+        foreach ($objs as $obj) {
+            $meta = $objMan->getClassMetadata(get_class($obj));
+            foreach ($meta->associationMappings as $field => $assoc) {
+                # FIXME: ORM specific!
+                $mappedBy = $assoc['mappedBy'];
+                if (is_null($mappedBy)) { continue; }
+                $data = call_user_func([$obj, "get" . ucfirst($field)]);
+                if (is_null($data)) { continue; }
+                foreach ($data as $subObj) {
+                    $mapping = call_user_func([$subObj, "get" . ucfirst($mappedBy)]);
+                    if (is_null($mapping)) {
+                        call_user_func([$subObj, "set" . ucfirst($mappedBy)], $obj);
+                        $objMan->persist($subObj);
+                    }
+                }
+            }
+
+            $this->generated[$model][] = $obj;
+            foreach ($this->getModelAncestors($objMan, $model) as $a) {
+                $this->generated[$a][] = $obj;
+            }
+
+            $objMan->persist($obj);
+        }
+
+        $objMan->flush();
+        return $objs;
+    }
+
+    protected function generate($n, $model, $fields = null)
+    {
+        if (!is_null($fields)) {
+            $this->describe($model, $fields);
+        }
+        $r = $this->build($n, $model);
     }
 
     protected function withLoadingMessage($msg, $func)
@@ -148,11 +149,8 @@ abstract class CachedFixture
     {
         $this->withLoadingMessage("building fixture template",
             function () {
-                $this->currentModel = null;
-                $this->currentObject = null;
-                $this->currentGenerateIndex = null;
-                $this->currentGenerateCount = null;
                 $this->generated = [];
+                $this->descriptions = [];
                 $this->fixture();
             }
         );
