@@ -8,6 +8,7 @@ use Doctrine\DBAL\Platforms\SqlitePlatform;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Migrations\Version;
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\Mapping\ClassMetadataInfo;
 
 use \Mockery as m;
 
@@ -129,6 +130,25 @@ abstract class CachedSqliteFixture extends CachedFixture
     final protected function getNamespaceAliases($objMan)
     {
         return $objMan->getConfiguration()->getEntityNamespaces();
+    }
+
+    final protected function prePersist($obj)
+    {
+        # Update reverse associations as needed
+        $meta = $this->objMan->getClassMetadata(get_class($obj));
+        foreach ($meta->associationMappings as $field => $assoc) {
+            $mappedBy = $assoc['mappedBy'];
+            if (is_null($mappedBy)) { continue; }
+            $data = call_user_func([$obj, "get" . ucfirst($field)]);
+            if (is_null($data)) { continue; }
+            foreach ($data as $subObj) {
+                $mapping = call_user_func([$subObj, "get" . ucfirst($mappedBy)]);
+                if (is_null($mapping)) {
+                    call_user_func([$subObj, "set" . ucfirst($mappedBy)], $obj);
+                    $this->objMan->persist($subObj);
+                }
+            }
+        }
     }
 
     private function migrationCodeFiles()
