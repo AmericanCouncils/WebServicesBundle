@@ -24,6 +24,7 @@ abstract class TestCase extends WebTestCase
      */
     protected function getFixtureClass()
     {
+        # TODO Maybe should use ac_web_services.default_fixture_class instead?
         return null;
     }
 

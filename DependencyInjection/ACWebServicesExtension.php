@@ -35,6 +35,7 @@ class ACWebServicesExtension extends Extension
         }
 
         //set processed config values in the container based on processed values
+        $container->setParameter('ac_web_services.default_fixture_class', $config['default_fixture_class']);
         $container->setParameter('ac_web_services.path_config', $config['paths']);
         $container->setParameter('ac_web_services.response_format_headers', $config['response_format_headers']);
         $container->setParameter('ac_web_services.serializable_formats', $config['serializable_formats']);
