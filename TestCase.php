@@ -91,11 +91,7 @@ abstract class TestCase extends WebTestCase
 
         if (isset($options['auth'])) {
             $user = $options['auth']['user'];
-            $roles = ['ROLE_USER'];
-            if (isset($options['auth']['roles'])) {
-                $roles = $options['auth']['roles'];
-            }
-            $this->fakeUserAuth($client, $user, $roles);
+            $this->fakeUserAuth($client, $user);
         }
 
         $client->request($method, $uri, $params, $files, $server, $content, $changeHist);
@@ -205,13 +201,13 @@ abstract class TestCase extends WebTestCase
         return $trace;
     }
 
-    private function fakeUserAuth($client, $user, $roles)
+    private function fakeUserAuth($client, $user)
     {
         # TODO: Need to merge the user into existing persistence context
         # Right now this has to be done manually from SUT, which is annoying
         # But we can't do it from here, because how do we know which persistence engine?
         $c = $client->getContainer();
-        $token = new PreAuthenticatedToken($user, [], 'mock', $roles);
+        $token = new PreAuthenticatedToken($user, [], 'mock', $user->getRoles());
         $c->set('security.context', m::mock(
             $c->get('security.context'),
             [
