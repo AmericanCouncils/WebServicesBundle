@@ -9,6 +9,7 @@ abstract class CachedFixture
     private $faker;
     private $generated;
     private $descriptions;
+    private $seedKeyStack;
 
     abstract protected function loadImpl($container);
     abstract protected function getFixtureObjectManager();
@@ -81,7 +82,8 @@ abstract class CachedFixture
                         "Can't use a non-function for fixture $model field $key"
                     );
                 }
-                mt_srand(hexdec(substr(md5("$cls-$key-$i"), 0, 8)));
+                array_push($this->seedKeyStack, "$cls-$key-$i");
+                mt_srand(hexdec(substr(md5(implode("-", $this->seedKeyStack)), 0, 8)));
                 $value = call_user_func($field, $helper);
                 if (is_null($value)) {
                     throw new \LogicException(
@@ -91,6 +93,7 @@ abstract class CachedFixture
                     $value = null;
                 }
                 call_user_func([$obj, "set" . ucfirst($key)], $value);
+                array_pop($this->seedKeyStack);
             }
 
             $objs[] = $obj;
@@ -135,6 +138,7 @@ abstract class CachedFixture
             function () {
                 $this->generated = [];
                 $this->descriptions = [];
+                $this->seedKeyStack = [];
                 $this->fixture();
             }
         );
