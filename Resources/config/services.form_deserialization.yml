@@ -4,3 +4,15 @@ services:
         arguments: [@jms_serializer.naming_strategy, @jms_serializer.object_constructor]
         tags:
             - { name: jms_serializer.deserialization_visitor, format: form }
+
+    #this adds a handler for datetimes because the default JMS service
+    #is not easily extendable for handling new formats... may be worth a PR
+    ac_web_services.form_deserialization_date_handler:
+        class: AC\WebServicesBundle\Serializer\DateTimeHandler
+        tags:
+            -
+                name: jms_serializer.handler
+                type: DateTime
+                format: form
+                direction: deserialization
+                method: deserializeDateTime
