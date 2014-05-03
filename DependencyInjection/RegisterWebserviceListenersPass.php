@@ -17,7 +17,7 @@ class RegisterWebserviceListenersPass implements CompilerPassInterface
             return;
         }
 
-        $definition = $container->getDefinition('event_dispatcher');
+        $definition = $container->findDefinition('event_dispatcher');
 
         foreach ($container->findTaggedServiceIds('ac.webservice.listener') as $id => $events) {
             foreach ($events as $event) {
