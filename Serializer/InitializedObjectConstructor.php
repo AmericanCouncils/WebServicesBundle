@@ -55,7 +55,7 @@ class InitializedObjectConstructor implements ObjectConstructorInterface
         }
 
         if ($context->attributes->containsKey('updateNestedData')) {
-            $updateNestedData = $context->attributes->get('updateNestedData')->get();
+            $updateNestedData = (bool) $context->attributes->get('updateNestedData')->get();
         }
 
         $metaDataStack = $context->getMetadataStack();

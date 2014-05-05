@@ -181,4 +181,44 @@ class InitializedObjectConstructorTest extends TestCase
             $this->context
         );
     }
+
+    public function testOptionallySerializeNested()
+    {
+
+        //passing only the nested age should replace the nested object, not update
+        $evan = new Person('Evan', 28);
+        $grey = new Person('Grey', 28);
+        $evan->setBestFriend($grey);
+        $modifiedEvan = $this->serializer->deserialize(
+            json_encode(['bestFriend' => ['age' => 29]]),
+            'AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\Model\Person',
+            'json',
+            DeserializationContext::create()->setTarget($evan)
+        );
+
+        $this->assertSame('Evan', $modifiedEvan->getName());
+        $this->assertSame(28, $modifiedEvan->getAge());
+        $this->assertSame(29, $modifiedEvan->getBestFriend()->getAge());
+        $this->assertSame(null, $modifiedEvan->getBestFriend()->getName());
+        //nested object should in fact be a different (new) instance
+        $this->assertFalse(spl_object_hash($grey) === spl_object_hash($modifiedEvan->getBestFriend()));
+
+        //passing only the nested age should update existing object
+        $evan = new Person('Evan', 28);
+        $grey = new Person('Grey', 28);
+        $evan->setBestFriend($grey);
+        $modifiedEvan = $this->serializer->deserialize(
+            json_encode(['bestFriend' => ['age' => 29]]),
+            'AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\Model\Person',
+            'json',
+            DeserializationContext::create()->setTarget($evan)->setSerializeNested(true)
+        );
+
+        $this->assertSame('Evan', $modifiedEvan->getName());
+        $this->assertSame(28, $modifiedEvan->getAge());
+        $this->assertSame(29, $modifiedEvan->getBestFriend()->getAge());
+        $this->assertSame('Grey', $modifiedEvan->getBestFriend()->getName());
+        //nested object should be the same (previous) instance
+        $this->assertTrue(spl_object_hash($grey) === spl_object_hash($modifiedEvan->getBestFriend()));
+    }
 }
