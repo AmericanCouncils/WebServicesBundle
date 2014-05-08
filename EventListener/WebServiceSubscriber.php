@@ -215,8 +215,8 @@ class WebServiceSubscriber implements EventSubscriberInterface
             )
         );
 
-        //inject exception data if we're in dev mode and enabled
-        if ($cfg['include_exception_data'] && in_array($this->container->get('kernel')->getEnvironment(), array('dev','test'))) {
+        //inject exception data if configured to do so
+        if ($cfg['include_exception_data']) {
             $errorData['exception'] = array(
                 'class' => get_class($exception),
                 'message' => $exception->getMessage(),
