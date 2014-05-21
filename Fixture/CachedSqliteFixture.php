@@ -64,9 +64,8 @@ abstract class CachedSqliteFixture extends CachedFixture
 
         $this->withLoadingMessage("building schema template", function () {
             try {
-                $template = $this->connectDb($this->baseSchemaPath);
-
-                $sql = [];
+                $schema = new Schema;
+                $addedSql = [];
                 foreach ($this->migrationCodeFiles() as $codePath) {
                     require_once($codePath);
                     $migName = pathinfo($codePath, PATHINFO_FILENAME);
@@ -78,7 +77,7 @@ abstract class CachedSqliteFixture extends CachedFixture
 
                     $versionMock = m::mock('\Doctrine\DBAL\Migrations\Version');
                     $versionMock->shouldReceive('addSql')->andReturnUsing(
-                        function ($statements, $params = [], $types = []) use (&$sql) {
+                        function ($statements, $params = [], $types = []) use (&$addedSql) {
                             if (count($params) > 0 || count($types) > 0) {
                                 throw new \RuntimeException(
                                     "AliceSqliteFixtureCache can't do addSql calls with params"
@@ -88,7 +87,7 @@ abstract class CachedSqliteFixture extends CachedFixture
                                 $statements = [$statements];
                             }
                             foreach ($statements as $s) {
-                                $sql[] = $s;
+                                $addedSql[] = $s;
                             }
                         }
                     );
@@ -96,11 +95,11 @@ abstract class CachedSqliteFixture extends CachedFixture
                     $versionInserter = \Closure::bind($versionInserter, null, $migMock);
                     $versionInserter($migMock, $versionMock);
 
-                    // up() can set up tables via Version->addSql and/or passed $schema
-                    $dummySchema = new Schema;
-                    $migMock->up($dummySchema);
-                    $sql = array_merge($sql, $dummySchema->toSql(new SqlitePlatform));
+                    $migMock->up($schema);
                 }
+
+                $sql = array_merge($schema->toSql(new SqlitePlatform), $addedSql);
+                $template = $this->connectDb($this->baseSchemaPath);
                 $template->exec(implode(";\n", $sql));
             } catch (\Exception $e) {
                 if (file_exists($this->baseSchemaPath)) {
