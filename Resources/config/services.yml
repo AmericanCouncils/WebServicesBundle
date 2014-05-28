@@ -1,15 +1,17 @@
 services:
     # handles API requests that match based on the app configuration
-    ac_web_services.kernel_listeners:
+    ac_web_services.web_service_subscriber:
         class: AC\WebServicesBundle\EventListener\WebServiceSubscriber
         arguments:
             - @service_container
+            - @logger
             - %ac_web_services.response_format_headers%
             - %ac_web_services.path_config%
             - %ac_web_services.serializable_formats%
         tags:
             -  { name: kernel.event_listener, event: kernel.request, method: onKernelEarlyRequest, priority: 255 }
             -  { name: kernel.event_listener, event: kernel.request, method: onKernelLateRequest, priority: -255 }
+            -  { name: monolog.logger, channel: web_services }
 
     ac_web_services.negotiator:
         class: AC\WebServicesBundle\Negotiator

@@ -15,7 +15,9 @@ use Symfony\Component\HttpKernel\Event\PostResponseEvent;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Psr\Log\LoggerInterface;
 use AC\WebServicesBundle\ServiceResponse;
+use AC\WebServicesBundle\Debug\ImprovedStackTrace;
 
 /**
  * A listener that monitors input/output for all API requests and provides generic API behavior.
@@ -36,6 +38,11 @@ class WebServiceSubscriber implements EventSubscriberInterface
      * @var Symfony\Component\DependencyInjection\ContainerInterface
      */
     protected $container;
+
+    /**
+     * @var Psr\Log\Loggerinterface
+     */
+    protected $logger;
 
     /**
      * @var Symfony\Component\EventDispatcher\EventDispatcherInterface
@@ -84,9 +91,10 @@ class WebServiceSubscriber implements EventSubscriberInterface
      * @param array              $formatHeaders
      * @param array              $pathConfig
      */
-    public function __construct(ContainerInterface $container, $formatHeaders = array(), $pathConfig = array(), $serializableFormats = array())
+    public function __construct(ContainerInterface $container, LoggerInterface $logger, $formatHeaders = array(), $pathConfig = array(), $serializableFormats = array())
     {
         $this->container = $container;
+        $this->logger = $logger;
         $this->formatHeaders = $formatHeaders;
         $this->pathConfig = $pathConfig;
         $this->serializableFormats = $serializableFormats;
@@ -223,7 +231,7 @@ class WebServiceSubscriber implements EventSubscriberInterface
                 'code' => $exception->getCode(),
                 'file' => $exception->getFile(),
                 'line' => $exception->getLine(),
-                'trace' => explode("#", $exception->getTraceAsString()),
+                'trace' => explode("\n", ImprovedStackTrace::getTrace($exception)),
             );
         }
 
@@ -237,6 +245,14 @@ class WebServiceSubscriber implements EventSubscriberInterface
         if ($cfg['suppress_response_codes']) {
             $outgoingHttpStatusCode = 200;
         }
+
+        //log the exception
+        $logLevel = $realHttpErrorCode >= 500 ? 'error' : 'warning';
+        $logMessage =
+            "Caught exception (mapped to code $realHttpErrorCode), " .
+            "response to client becomes HTTP $outgoingHttpStatusCode $errorMessage\n" .
+            ImprovedStackTrace::getTrace($exception);
+        $this->logger->log($logLevel, $logMessage);
 
         $headers = array_merge($cfg['additional_headers'], $this->formatHeaders[$format]);
 
