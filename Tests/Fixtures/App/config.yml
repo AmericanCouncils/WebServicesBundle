@@ -66,3 +66,8 @@ ac_web_services:
                 'AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\BundleException': { code: 403, message: 'Custom error message' }
             additional_headers:
                 'x-custom-acwebservices': 'foo-bar-baz'
+
+monolog:
+    handlers:
+        main:
+            type: test
