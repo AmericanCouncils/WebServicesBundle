@@ -251,7 +251,7 @@ class WebServiceSubscriber implements EventSubscriberInterface
         $logMessage =
             "Caught exception (mapped to code $realHttpErrorCode), " .
             "response to client becomes HTTP $outgoingHttpStatusCode $errorMessage\n" .
-            ImprovedStackTrace::getTrace($exception);
+            ImprovedStackTrace::getTrace($exception) . "\n---";
         $this->logger->log($logLevel, $logMessage);
 
         $headers = array_merge($cfg['additional_headers'], $this->formatHeaders[$format]);
