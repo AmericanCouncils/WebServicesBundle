@@ -89,6 +89,10 @@ abstract class TestCase extends WebTestCase
 
         $client = $this->getClient();
 
+        if (isset($options['containerConfig'])) {
+            call_user_func($options['containerConfig'], $client->getContainer());
+        }
+
         if (isset($options['auth'])) {
             $user = $options['auth']['user'];
             $this->fakeUserAuth($client, $user);
@@ -142,10 +146,11 @@ abstract class TestCase extends WebTestCase
             ) {
                 $options['server']['CONTENT_TYPE'] = 'application/json';
             }
+
             if (
                 is_array($options['content']) &&
-                $options['server']['CONTENT_TYPE'] == 'application/json')
-            {
+                $options['server']['CONTENT_TYPE'] == 'application/json'
+            ) {
                 $options['content'] = json_encode($options['content']);
             }
         }
