@@ -89,6 +89,10 @@ abstract class TestCase extends WebTestCase
 
         $client = $this->getClient();
 
+        if (isset($options['containerConfig'])) {
+            call_user_func($options['containerConfig'], $client->getContainer());
+        }
+
         if (isset($options['auth'])) {
             $user = $options['auth']['user'];
             $this->fakeUserAuth($client, $user);
@@ -142,10 +146,11 @@ abstract class TestCase extends WebTestCase
             ) {
                 $options['server']['CONTENT_TYPE'] = 'application/json';
             }
+
             if (
                 is_array($options['content']) &&
-                $options['server']['CONTENT_TYPE'] == 'application/json')
-            {
+                $options['server']['CONTENT_TYPE'] == 'application/json'
+            ) {
                 $options['content'] = json_encode($options['content']);
             }
         }
@@ -203,10 +208,22 @@ abstract class TestCase extends WebTestCase
 
     private function fakeUserAuth($client, $user)
     {
-        # TODO: Need to merge the user into existing persistence context
-        # Right now this has to be done manually from SUT, which is annoying
-        # But we can't do it from here, because how do we know which persistence engine?
         $c = $client->getContainer();
+
+        // The user object may have been made in the context of a different instance of the
+        // object manager than the one being used by this client.
+        if ($fixtureCls = $this->getFixtureClass()) {
+            $fixture = new $fixtureCls;
+            $manager = null;
+            if (is_a($fixture, '\AC\WebServicesBundle\Fixture\CachedSqliteFixture')) {
+                $manager = $c->get('doctrine')->getManager();
+                $user = $manager->merge($user);
+            } else if (is_a($fixture, '\AC\WebServicesBundle\Fixture\CachedMongoFixture')) {
+                $manager = $c->get('doctrine_mongodb')->getManager();
+                $user = $manager->merge($user);
+            }
+        }
+
         $token = new PreAuthenticatedToken($user, [], 'mock', $user->getRoles());
         $c->set('security.context', m::mock(
             $c->get('security.context'),
