@@ -75,6 +75,11 @@ abstract class CachedSqliteFixture extends CachedFixture
                     // having to pass its constructor our migration configuration.
                     $migMock = m::mock($migClass)->shouldDeferMissing();
 
+                    // Force set the platform, even though it wasn't loaded from a configuration
+                    $migReflector = new \ReflectionProperty($migClass, "platform");
+                    $migReflector->setAccessible(true);
+                    $migReflector->setValue($migMock, new SqlitePlatform);
+
                     $versionMock = m::mock('\Doctrine\DBAL\Migrations\Version');
                     $versionMock->shouldReceive('addSql')->andReturnUsing(
                         function ($statements, $params = [], $types = []) use (&$addedSql) {
