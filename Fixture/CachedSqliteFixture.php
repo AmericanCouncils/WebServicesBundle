@@ -6,7 +6,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\PDOConnection;
 use Doctrine\DBAL\Driver\PDOSqlite\Driver as SqliteDriver;
 use Doctrine\DBAL\Platforms\SqlitePlatform;
-use Doctrine\DBAL\Schema\Schema;
+use Doctrine\DBAL\Schema\SqliteSchemaManager;
 use Doctrine\DBAL\Migrations\Version;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
@@ -64,9 +64,14 @@ abstract class CachedSqliteFixture extends CachedFixture
 
         $this->withLoadingMessage("building schema template", function () {
             try {
-                $schema = new Schema;
-                $addedSql = [];
                 foreach ($this->migrationCodeFiles() as $codePath) {
+                    $templateDb = $this->connectDb($this->baseSchemaPath);
+                    $schemaManager = new SqliteSchemaManager($templateDb);
+                    $schema = $schemaManager->createSchema();
+                    $platform = $templateDb->getDatabasePlatform();
+                    $templateDb->close();
+                    unlink($this->baseSchemaPath);
+
                     require_once($codePath);
                     $migName = pathinfo($codePath, PATHINFO_FILENAME);
                     $migClass = 'Application\Migrations\\' . $migName;
@@ -78,14 +83,16 @@ abstract class CachedSqliteFixture extends CachedFixture
                     // Force set the platform, even though it wasn't loaded from a configuration
                     $migReflector = new \ReflectionProperty($migClass, "platform");
                     $migReflector->setAccessible(true);
-                    $migReflector->setValue($migMock, new SqlitePlatform);
+                    $migReflector->setValue($migMock, $platform);
 
+                    $addedSql = [];
                     $versionMock = m::mock('\Doctrine\DBAL\Migrations\Version');
                     $versionMock->shouldReceive('addSql')->andReturnUsing(
                         function ($statements, $params = [], $types = []) use (&$addedSql) {
                             if (count($params) > 0 || count($types) > 0) {
+                                # FIXME
                                 throw new \RuntimeException(
-                                    "AliceSqliteFixtureCache can't do addSql calls with params"
+                                    "CachedSqliteFixture can't do addSql calls with params"
                                 );
                             }
                             if (!is_array($statements)) {
@@ -101,11 +108,11 @@ abstract class CachedSqliteFixture extends CachedFixture
                     $versionInserter($migMock, $versionMock);
 
                     $migMock->up($schema);
-                }
 
-                $sql = array_merge($schema->toSql(new SqlitePlatform), $addedSql);
-                $template = $this->connectDb($this->baseSchemaPath);
-                $template->exec(implode(";\n", $sql));
+                    $templateDb = $this->connectDb($this->baseSchemaPath);
+                    $sql = array_merge($schema->toSql($platform), $addedSql);
+                    $templateDb->exec(implode(";\n", $sql));
+                }
             } catch (\Exception $e) {
                 if (file_exists($this->baseSchemaPath)) {
                     unlink($this->baseSchemaPath);
