@@ -5,6 +5,8 @@ namespace AC\WebServicesBundle\Fixture;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\PDOConnection;
 use Doctrine\DBAL\Driver\PDOSqlite\Driver as SqliteDriver;
+use Doctrine\DBAL\Driver\PDOMySql\Driver as MySqlDriver;
+use Doctrine\DBAL\Platforms\MySqlPlatform;
 use Doctrine\DBAL\Platforms\SqlitePlatform;
 use Doctrine\DBAL\Schema\SqliteSchemaManager;
 use Doctrine\DBAL\Migrations\Version;
@@ -12,6 +14,7 @@ use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
 
 use \Mockery as m;
+use \Functional as F;
 
 abstract class CachedSqliteFixture extends CachedFixture
 {
@@ -24,8 +27,18 @@ abstract class CachedSqliteFixture extends CachedFixture
     {
         $mainEM = $container->get('doctrine')->getManager();
         $conn = $mainEM->getConnection();
-        if (!$conn->getDatabasePlatform() instanceof SqlitePlatform) {
-            throw new \RuntimeException("Cannot load sqlite fixture into non-sqlite database");
+        $platform = $conn->getDatabasePlatform();
+        if ($platform instanceof MySqlPlatform) {
+            print "\nAbout to overwrite MySQL database! If you're sure, type \"yes\":\n";
+            $line = fgets(STDIN);
+            if ($line == "yes\n") {
+                return $this->overwriteMysqlData($mainEM);
+            } else {
+                print "Fixture load cancelled.\n";
+                return;
+            }
+        } elseif (!($platform instanceof SqlitePlatform)) {
+            throw new \RuntimeException("Cannot load fixture into this SQL database type");
         }
 
         if (!is_dir(".tmp")) {
@@ -48,6 +61,39 @@ abstract class CachedSqliteFixture extends CachedFixture
     final protected function getFixtureObjectManager()
     {
         return $this->templateEM;
+    }
+
+    private function overwriteMysqlData($mainEM)
+    {
+        $fileMigs = F\map($this->migrationCodeFiles(), function($filename) {
+            if (preg_match("#Version(\d+).php$#", $filename, $matches)) {
+                return $matches[1];
+            } else {
+                throw new \RuntimeException("Invalid migration file $filename");
+            }
+        });
+
+        $conn = $mainEM->getConnection();
+        $dbMigs = F\pluck($conn->fetchAll("SELECT * FROM migration_versions"), 'version');
+        sort($dbMigs);
+
+        if ($fileMigs !== $dbMigs) {
+            throw new \RuntimeException("MySQL database needs to be migrated first");
+        }
+
+        $conn->query('SET FOREIGN_KEY_CHECKS=0');
+        $tables = F\map($conn->fetchAll("SHOW TABLES"), function ($row) {
+            return F\first($row);
+        });
+        foreach ($tables as $tableName) {
+            if ($tableName == 'migration_versions') { continue; }
+            $conn->executeUpdate($conn->getDatabasePlatform()->getTruncateTableSql($tableName));
+        }
+        $conn->query('SET FOREIGN_KEY_CHECKS=1');
+
+        $this->templateEM = $mainEM;
+        $this->execFixture();
+        $this->templateEM = null;
     }
 
     private function setupSchemaTemplate()
