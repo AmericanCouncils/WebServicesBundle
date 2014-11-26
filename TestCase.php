@@ -101,31 +101,36 @@ abstract class TestCase extends WebTestCase
         $client->request($method, $uri, $params, $files, $server, $content, $changeHist);
         $response = $client->getResponse();
 
-        if (!isset($options['expectedCode'])) {
+        if (!array_key_exists('expectedCode', $options)) {
             $options['expectedCode'] = 200;
         }
         if (!is_null($options['expectedCode'])) {
             if ($response->getStatusCode() != $options['expectedCode']) {
                 $msg = "Expected status code " . $options['expectedCode'] .
-                    ", got " . $response->getStatusCode();
+                    ", got " . $response->getStatusCode() . ".\n";
                 if ($response->headers->get('Content-Type') == "application/json") {
-                    $msg .= ". JSON content of invalid response:\n";
                     $content = json_decode($response->getContent(), true);
+                    if (is_null($content)) {
+                        $msg .= "Response content (unparseable JSON):\n$result";
+                    } else {
+                        $msg .= "JSON content of invalid response:\n";
+                        # Clean up the stack trace if there is one
+                        if (isset($content['exception']) && isset($content['exception']['trace'])) {
+                            $content['exception']['trace'] =
+                                $this->cleanTrace($content['exception']['trace']);
+                        }
 
-                    # Clean up the stack trace if there is one
-                    if (isset($content['exception']) && isset($content['exception']['trace'])) {
-                        $content['exception']['trace'] =
-                            $this->cleanTrace($content['exception']['trace']);
+                        $result = var_export($content, true);
+                        if (strlen($result) > 20*1024) {
+                            $result = substr($result, 0, 20*1024);
+                            $result .= "\n.......\n.......";
+                        }
+                        $msg .= "$result\n";
                     }
-
-                    $result = var_export($content, true);
-                    if (strlen($result) > 20*1024) {
-                        $result = substr($result, 0, 20*1024);
-                        $result .= "\n.......\n.......";
-                    }
-                    $msg .= "$result\n";
+                } else {
+                    $msg .= "Response content (first 16K):\n" . substr($result, 0, 1024*16);
                 }
-                $this->fail($msg);
+                $this->fail(trim($msg));
             }
         }
 
