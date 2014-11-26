@@ -1,4 +1,6 @@
-#generally copied from https://github.com/nelmio/NelmioApiDocBundle/blob/master/.travis.yml
+notifications:
+    webhooks: http://ac-dev-bishop.herokuapp.com/bishop/travisci/general
+    on_start: true
 
 language: php
 
