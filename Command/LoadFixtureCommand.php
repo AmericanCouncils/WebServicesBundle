@@ -23,6 +23,12 @@ class LoadFixtureCommand extends Command
     {
         $container = $this->getApplication()->getKernel()->getContainer();
 
+        if ($container->get('kernel')->getEnvironment() == 'prod') {
+            throw new \RuntimeException(
+                "You may not load fixture data into a production environment"
+            );
+        }
+
         $cls = $input->getArgument('fixtureClass');
         if (is_null($cls)) {
             $cls = $container->getParameter('ac_web_services.default_fixture_class');
