@@ -85,7 +85,7 @@ class InitializedObjectConstructor implements ObjectConstructorInterface
             $top = $targetStack->top();
             $instance = $propertyMetadata->reflection->getValue($top['object']);
 
-            if (is_null($instance) || is_array($instance)) {
+            if (is_null($instance) || is_array($instance) || $instance instanceof \Traversable) {
                 return $this->fallbackConstructor->construct($visitor, $metadata, $data, $type, $context);
             }
 
