@@ -18,6 +18,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Psr\Log\LoggerInterface;
 use AC\WebServicesBundle\ServiceResponse;
 use AC\WebServicesBundle\Debug\ImprovedStackTrace;
+use AC\WebServicesBundle\Exception\ServiceException;
 
 /**
  * A listener that monitors input/output for all API requests and provides generic API behavior.
@@ -197,11 +198,12 @@ class WebServiceSubscriber implements EventSubscriberInterface
         $exception = $e->getException();
         $exceptionClass = get_class($exception);
 
-        //TODO: take into account ValidationException
-
         //preserve specific http exception codes and messages, otherwise it's 500
         $realHttpErrorCode = $outgoingHttpStatusCode = 500;
         $errorMessage = "Internal Server Error";
+        if ($exception instanceof ServiceException) {
+            $errorData = $exception->getData();
+        }
         if ($exception instanceof HttpException) {
             $realHttpErrorCode = $outgoingHttpStatusCode = $exception->getStatusCode();
             $errorMessage = ($exception->getMessage()) ? $exception->getMessage() : Response::$statusTexts[$realHttpErrorCode];
@@ -216,12 +218,13 @@ class WebServiceSubscriber implements EventSubscriberInterface
         }
 
         //set generic error data
-        $errorData = array(
-            'response' => array(
-                'code' => $realHttpErrorCode,
-                'message' => $errorMessage,
-            )
-        );
+        if (!isset ($errorData)) {
+            $errorData = [];
+        }
+        $errorData['response'] = [
+            'code' => $realHttpErrorCode,
+            'message' => $errorMessage,
+        ];
 
         //inject exception data if configured to do so
         if ($cfg['include_exception_data']) {

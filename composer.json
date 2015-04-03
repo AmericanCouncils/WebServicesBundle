@@ -27,7 +27,8 @@
     "require-dev": {
         "symfony/symfony": "~2.2",
         "symfony/monolog-bundle": "~2.2",
-        "sensio/framework-extra-bundle": "~2.2"
+        "sensio/framework-extra-bundle": "~2.2",
+        "phpunit/phpunit": "~4.0"
     },
     "conflict": {
         "jms/serializer": "<0.15",
