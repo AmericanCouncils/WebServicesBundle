@@ -14,6 +14,8 @@ use AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\Model\Person;
 use AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\Model\Group;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\DeserializationContext;
+use AC\WebServicesBundle\Exception\ServiceException;
+use AC\WebServicesBundle\Exception\ValidationException;
 
 /**
  * These controller routes are called by various tests to ensure any API responds as expected based
@@ -141,5 +143,31 @@ class Controllers extends Controller
         $data = $this->decodeRequest('AC\WebServicesBundle\Tests\Fixtures\FixtureBundle\Model\Person');
 
         return new ServiceResponse(array('person' => $data));
+    }
+
+    /**
+     * @Route("/api/service-exception")
+     * @Method("GET")
+     */
+    public function apiServiceException()
+    {
+        throw new ServiceException(422, ['foo' => 'bar']);
+    }
+
+    /**
+     * @Route("/api/validation-exception")
+     * @Method("GET")
+     */
+    public function apiValidationException()
+    {
+        $group = new Group('foo', 'blahblahblah');
+        $group->setOwner(new Person('John', 3));
+        $group->setMembers([
+            new Person('Foobert', 1),
+            new Person("33", 2),
+            new Person('Barbara', 3)
+        ]);
+
+        $this->validate($group);
     }
 }

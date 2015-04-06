@@ -71,8 +71,6 @@ class Controller extends BaseController
      **/
     protected function validate($obj)
     {
-        throw new \RuntimeException('Not yet implemented.');
-
         $errors = $this->container->get('validator')->validate($obj);
 
         if (count($errors) > 0) {

@@ -8,6 +8,7 @@ framework:
     translator:      { fallback: en }
     profiler:        { only_exceptions: false }
     test: ~
+    validation: { enable_annotations: true }
     templating:
         cache: ~
         engines: [twig]
