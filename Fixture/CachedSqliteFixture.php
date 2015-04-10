@@ -12,6 +12,7 @@ use Doctrine\DBAL\Schema\SqliteSchemaManager;
 use Doctrine\DBAL\Migrations\Version;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
+use Doctrine\ORM\Tools\SchemaTool;
 
 use \Mockery as m;
 use \Functional as F;
@@ -45,7 +46,7 @@ abstract class CachedSqliteFixture extends CachedFixture
             mkdir(".tmp");
         }
         if (is_null($this->baseSchemaPath)) {
-            $this->setupSchemaTemplate();
+            $this->setupSchemaTemplate($mainEM);
         }
         if (is_null($this->dbTemplatePath)) {
             $this->dbTemplatePath = $this->setupFixtureTemplate($mainEM);
@@ -65,7 +66,7 @@ abstract class CachedSqliteFixture extends CachedFixture
 
     private function overwriteMysqlData($mainEM)
     {
-        $fileMigs = F\map($this->migrationCodeFiles(), function($filename) {
+        $fileMigs = F\map(glob("app/DoctrineMigrations/Version*.php"), function($filename) {
             if (preg_match("#Version(\d+).php$#", $filename, $matches)) {
                 return $matches[1];
             } else {
@@ -75,9 +76,10 @@ abstract class CachedSqliteFixture extends CachedFixture
 
         $conn = $mainEM->getConnection();
         $dbMigs = F\pluck($conn->fetchAll("SELECT * FROM migration_versions"), 'version');
-        sort($dbMigs);
 
-        if ($fileMigs !== $dbMigs) {
+        if (count(array_diff($dbMigs, $fileMigs)) > 0) {
+            throw new \RuntimeException("MySQL database has unknown migrations");
+        } elseif (count(array_diff($fileMigs, $dbMigs)) > 0) {
             throw new \RuntimeException("MySQL database needs to be migrated first");
         }
 
@@ -96,69 +98,20 @@ abstract class CachedSqliteFixture extends CachedFixture
         $this->templateEM = null;
     }
 
-    private function setupSchemaTemplate()
+    private function setupSchemaTemplate($mainEM)
     {
-        $schemaSource = "";
-        foreach ($this->migrationCodeFiles() as $codePath) {
-            $schemaSource .= file_get_contents($codePath);
-        }
-        $schemaHash = md5($schemaSource);
+        $tool = new SchemaTool($mainEM);
+        $schemaSql = $tool->getCreateSchemaSql($mainEM->getMetadataFactory()->getAllMetadata());
+        $schemaHash = md5(var_export($schemaSql, true));
         $this->baseSchemaPath = ".tmp/BaseSchema_" . $schemaHash . ".sqlite3";
         if (file_exists($this->baseSchemaPath)) {
             return;
         }
 
-        $this->withLoadingMessage("building schema template", function () {
+        $this->withLoadingMessage("building schema template", function () use ($schemaSql) {
             try {
-                foreach ($this->migrationCodeFiles() as $codePath) {
-                    $templateDb = $this->connectDb($this->baseSchemaPath);
-                    $schemaManager = new SqliteSchemaManager($templateDb);
-                    $schema = $schemaManager->createSchema();
-                    $platform = $templateDb->getDatabasePlatform();
-                    $templateDb->close();
-                    unlink($this->baseSchemaPath);
-
-                    require_once($codePath);
-                    $migName = pathinfo($codePath, PATHINFO_FILENAME);
-                    $migClass = 'Application\Migrations\\' . $migName;
-
-                    // We want to get at the up() method of the migration without
-                    // having to pass its constructor our migration configuration.
-                    $migMock = m::mock($migClass)->shouldDeferMissing();
-
-                    // Force set the platform, even though it wasn't loaded from a configuration
-                    $migReflector = new \ReflectionProperty($migClass, "platform");
-                    $migReflector->setAccessible(true);
-                    $migReflector->setValue($migMock, $platform);
-
-                    $addedSql = [];
-                    $versionMock = m::mock('\Doctrine\DBAL\Migrations\Version');
-                    $versionMock->shouldReceive('addSql')->andReturnUsing(
-                        function ($statements, $params = [], $types = []) use (&$addedSql) {
-                            if (count($params) > 0 || count($types) > 0) {
-                                # FIXME
-                                throw new \RuntimeException(
-                                    "CachedSqliteFixture can't do addSql calls with params"
-                                );
-                            }
-                            if (!is_array($statements)) {
-                                $statements = [$statements];
-                            }
-                            foreach ($statements as $s) {
-                                $addedSql[] = $s;
-                            }
-                        }
-                    );
-                    $versionInserter = function ($mig, $ver) { $mig->version = $ver; };
-                    $versionInserter = \Closure::bind($versionInserter, null, $migMock);
-                    $versionInserter($migMock, $versionMock);
-
-                    $migMock->up($schema);
-
-                    $templateDb = $this->connectDb($this->baseSchemaPath);
-                    $sql = array_merge($schema->toSql($platform), $addedSql);
-                    $templateDb->exec(implode(";\n", $sql));
-                }
+                $templateDb = $this->connectDb($this->baseSchemaPath);
+                $templateDb->exec(implode(";\n", $schemaSql));
             } catch (\Exception $e) {
                 if (file_exists($this->baseSchemaPath)) {
                     unlink($this->baseSchemaPath);
@@ -223,7 +176,6 @@ abstract class CachedSqliteFixture extends CachedFixture
     private function migrationCodeFiles()
     {
         if (is_null($this->migCodeFiles)) {
-            $this->migCodeFiles = glob("app/DoctrineMigrations/Version*.php");
             sort($this->migCodeFiles);
         }
 
