@@ -19,6 +19,7 @@ use \Functional as F;
 
 abstract class CachedSqliteFixture extends CachedFixture
 {
+    private $cacheDir = null;
     private $baseSchemaPath = null;
     private $dbTemplatePath = null;
     private $migCodeFiles = null;
@@ -26,6 +27,8 @@ abstract class CachedSqliteFixture extends CachedFixture
 
     final protected function loadImpl($container)
     {
+        $this->cacheDir = $container->getParameter("kernel.cache_dir") . "/cached_sqlite_fixture";
+
         $mainEM = $container->get('doctrine')->getManager();
         $conn = $mainEM->getConnection();
         $platform = $conn->getDatabasePlatform();
@@ -42,8 +45,8 @@ abstract class CachedSqliteFixture extends CachedFixture
             throw new \RuntimeException("Cannot load fixture into this SQL database type");
         }
 
-        if (!is_dir(".tmp")) {
-            mkdir(".tmp");
+        if (!is_dir($this->cacheDir)) {
+            mkdir($this->cacheDir, 0777, true);
         }
         if (is_null($this->baseSchemaPath)) {
             $this->setupSchemaTemplate($mainEM);
@@ -103,7 +106,7 @@ abstract class CachedSqliteFixture extends CachedFixture
         $tool = new SchemaTool($mainEM);
         $schemaSql = $tool->getCreateSchemaSql($mainEM->getMetadataFactory()->getAllMetadata());
         $schemaHash = md5(var_export($schemaSql, true));
-        $this->baseSchemaPath = ".tmp/BaseSchema_" . $schemaHash . ".sqlite3";
+        $this->baseSchemaPath = $this->cacheDir . "/BaseSchema_" . $schemaHash . ".sqlite3";
         if (file_exists($this->baseSchemaPath)) {
             return;
         }
@@ -124,7 +127,7 @@ abstract class CachedSqliteFixture extends CachedFixture
     private function setupFixtureTemplate($mainEM)
     {
         $clsName = str_replace("\\", "__", get_called_class());
-        $templatePath = ".tmp/$clsName.sqlite3";
+        $templatePath = $this->cacheDir . "/$clsName.sqlite3";
 
         try {
             copy($this->baseSchemaPath, $templatePath);
