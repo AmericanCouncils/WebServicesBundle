@@ -37,6 +37,10 @@ class Controller extends BaseController
             }
         }
 
+        if (!$data) {
+            return null;
+        }
+
         return $this->deserialize($data, $class, $serializerFormat, $ctx);
     }
 
