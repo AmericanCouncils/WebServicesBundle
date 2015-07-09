@@ -13,11 +13,11 @@ class RegisterWebserviceListenersPass implements CompilerPassInterface
 {
     public function process(ContainerBuilder $container)
     {
-        if (!$container->hasDefinition('event_dispatcher')) {
+        $definition = $container->findDefinition('event_dispatcher');
+
+        if (!$definition) {
             return;
         }
-
-        $definition = $container->findDefinition('event_dispatcher');
 
         foreach ($container->findTaggedServiceIds('ac.webservice.listener') as $id => $events) {
             foreach ($events as $event) {
