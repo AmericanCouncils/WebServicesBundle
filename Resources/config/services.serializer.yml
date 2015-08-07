@@ -1,8 +1,15 @@
+parameters:
+    ac_web_services.serializer.nested_collection_comparison_field: false
+    ac_web_services.serializer.nested_collection_comparison_field_map: []
+
 services:
+
     ac_web_services.initialized_object_constructor:
         class: AC\WebServicesBundle\Serializer\InitializedObjectConstructor
         arguments:
             - @ac_web_services.serializer.fallback_object_constructor
+            - %ac_web_services.serializer.nested_collection_comparison_field%
+            - %ac_web_services.serializer.nested_collection_comparison_field_map%
 
     ac_web_services.serializer.fallback_object_constructor:
         class: JMS\Serializer\Construction\UnserializeObjectConstructor
