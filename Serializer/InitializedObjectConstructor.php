@@ -157,6 +157,7 @@ class InitializedObjectConstructor implements ObjectConstructorInterface
             }
         }
         
-        throw new \LogicException("This should be impossible.");
+        // always return fallback if there was no matching condition
+        return $this->fallbackConstructor->construct($visitor, $metadata, $data, $type, $context);
     }
 }
