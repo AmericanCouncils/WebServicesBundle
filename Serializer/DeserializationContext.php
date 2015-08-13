@@ -20,9 +20,7 @@ class DeserializationContext extends BaseDeserializationContext
 
     public function setCreateValidationErrors($bool)
     {
-        $this->setAttribute('createValidationErrors', (bool) $bool);
-
-        return $this;
+        return $this->setAttribute('createValidationErrors', (bool) $bool);
     }
 
     public function addValidationError(ConstraintViolationInterface $error)
@@ -58,9 +56,18 @@ class DeserializationContext extends BaseDeserializationContext
      */
     public function setSerializeNested($bool)
     {
-        $this->setAttribute('updateNestedData', (bool) $bool);
-
-        return $this;
+        return $this->setAttribute('updateNestedData', (bool) $bool);
+    }
+    
+    /**
+     * Whether or not serializing into existing objects within a collection.  This
+     * requires a comparision field for the association in question to check against
+     *
+     * @param boolean $bool
+     */
+    public function setSerializeNestedCollections($bool)
+    {
+        return $this->setAttribute('updateNestedCollections', (bool) $bool);
     }
 
     /**
@@ -70,9 +77,29 @@ class DeserializationContext extends BaseDeserializationContext
      */
     public function setTarget($target)
     {
-        $this->setAttribute('target', $target);
-
-        return $this;
+        return $this->setAttribute('target', $target);
+    }
+    
+    /**
+     * Set the default fieldname used for comparisons when serializing
+     * into objects in a nested collection.
+     *
+     * @param string $fieldName
+     */
+    public function setCollectionComparisonField($fieldName)
+    {
+        return $this->setAttribute('nestedCollectionDefaultComparisonField', $fieldName);
+    }
+    
+    /**
+     * Set a map of associations to fieldnames to use for comparisons when
+     * serializing into objects within a nested collection
+     * 
+     * @param string $map
+     */
+    public function setCollectionComparisonFieldMap($map)
+    {
+        return $this->setAttribute('nestedCollectionFieldComparisonMap', $map);
     }
 
     /**

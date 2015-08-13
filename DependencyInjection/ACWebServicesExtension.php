@@ -26,12 +26,20 @@ class ACWebServicesExtension extends Extension
         }
 
         //load serializer overrides
-        if ($serializer['enabled'] && $serializer['allow_deserialize_into_target']) {
-            $loader->load('services.serializer.yml');
-        }
-        if ($serializer['enabled'] && $serializer['enable_form_deserialization']) {
-            $container->setParameter('ac_web_services.serializer.enable_form_deserialization', true);
-            $loader->load('services.form_deserialization.yml');
+        if ($serializer['enabled']) {
+            if ($serializer['allow_deserialize_into_target']) {
+                $loader->load('services.serializer.yml');
+            }
+            if ($serializer['enable_form_deserialization']) {
+                $container->setParameter('ac_web_services.serializer.enable_form_deserialization', true);
+                $loader->load('services.form_deserialization.yml');
+            }
+            if ($serializer['nested_collection_comparison_field']) {
+                $container->setParameter('ac_web_services.serializer.nested_collection_comparison_field', $serializer['nested_collection_comparison_field']);
+            }
+            if ($serializer['nested_collection_comparison_field_map']) {
+                $container->setParameter('ac_web_services.serializer.nested_collection_comparison_field_map', $serializer['nested_collection_comparison_field_map']);
+            }
         }
 
         //set processed config values in the container based on processed values
