@@ -10,6 +10,7 @@ abstract class CachedFixture
     private $generated;
     private $descriptions;
     private $seedKeyStack;
+    private $helperCache;
 
     abstract protected function loadImpl($container);
     abstract protected function getFixtureObjectManager();
@@ -74,7 +75,7 @@ abstract class CachedFixture
         $objs = [];
         for ($i = 0; $i < $n; ++$i) {
             $obj = new $cls;
-            $helper = new FixtureHelper($this, $model, $obj, $n, $i);
+            $helper = new FixtureHelper($this, $model, $obj, $n, $i, $this->helperCache);
 
             foreach ($this->descriptions[$model] as $key => $field) {
                 if (!is_callable($field)) {
@@ -139,6 +140,7 @@ abstract class CachedFixture
                 $this->generated = [];
                 $this->descriptions = [];
                 $this->seedKeyStack = [];
+                $this->helperCache = [];
                 $this->fixture();
             }
         );
