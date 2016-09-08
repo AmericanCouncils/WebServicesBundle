@@ -155,10 +155,10 @@ Exceptions return the response data structure described above, for example:
 When handling api requests, the bundle fires a few extra events for all API requests.  These are useful hooks for triggering other
 functionality, such as logging or metrics gathering, that should apply to all API service routes.  The events fired include:
 
-* `webservice.request` - When an API request is initiated, and has successfully been matched to a controller
-* `webservice.exception` - If an error is encountered during an API route
-* `webservice.response` - The final response from the API
-* `webservice.terminate` - After the API response has been sent
+* `ac.webservice.request` - When an API request is initiated, and has successfully been matched to a controller
+* `ac.webservice.exception` - If an error is encountered during an API route
+* `ac.webservice.response` - The final response from the API
+* `ac.webservice.terminate` - After the API response has been sent
 
 You can register a listener service for any of these events with the `ac.webservice.listener` container tag, or register
 subscribers to multiple events via the `ac.webservice.subscriber` tag.
